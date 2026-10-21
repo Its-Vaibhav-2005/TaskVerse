@@ -792,7 +792,23 @@ class _HomeState extends State<Home> {
               CircleAvatar(
                 radius: 17,
                 backgroundColor: colors.selected,
-                child: Icon(Icons.person_outline, color: purple, size: 19),
+                child:
+                    cloud['connected'] == true &&
+                        (cloud['identity'] as Map?)?['photo'] != null
+                    ? ClipOval(
+                        child: Image.memory(
+                          base64Decode(cloud['identity']['photo'] as String),
+                          width: 34,
+                          height: 34,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.person_outline,
+                            color: purple,
+                            size: 19,
+                          ),
+                        ),
+                      )
+                    : Icon(Icons.person_outline, color: purple, size: 19),
               ),
               SizedBox(width: 10),
               Expanded(
@@ -800,7 +816,10 @@ class _HomeState extends State<Home> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'My workspace',
+                      cloud['connected'] == true
+                          ? ((cloud['identity'] as Map?)?['name'] as String? ??
+                                'My workspace')
+                          : 'My workspace',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -809,7 +828,7 @@ class _HomeState extends State<Home> {
                       ),
                     ),
                     Text(
-                      'Local account',
+                      cloud['online'] == true ? 'Online' : 'Offline',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: muted, fontSize: 10),

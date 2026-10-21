@@ -49,6 +49,15 @@ class WorkspaceManager {
     if(snapshot.alias)this.rename(id,snapshot.alias);
   }
   markSynced(id,revision,base) {const state=this.store(id).getPreference('syncState',{});this.updateSync(id,{base,lastSync:new Date().toISOString(),dirty:state.revision!==revision,status:state.revision!==revision?'pending':'synced',error:null,pending:null});}
+  remove(id) {
+    if(id==='local'||!this.profile(id)?.sheet_id)throw Error('Only Google trackers can be deleted here.');
+    // Archive the database on disk rather than destroying offline records.
+    this.stores.get(id)?.close();this.stores.delete(id);
+    const file=path.join(this.directory,'workspaces',`${id}.sqlite3`);
+    if(fs.existsSync(file)){const archive=path.join(this.directory,'deleted-trackers');fs.mkdirSync(archive,{recursive:true});fs.renameSync(file,path.join(archive,`${id}-${Date.now()}.sqlite3`));}
+    if(this.activeId===id)this.activate('local');
+    this.root.db.prepare('DELETE FROM workspaces WHERE id = ?').run(id);
+  }
   close() {for(const db of this.stores.values())db.close();}
 }
 function validateAlias(value) {if(typeof value!=='string'||!value.trim()||value.trim().length>60)throw Error('Give the tracker a name of 1–60 characters.');return value.trim();}

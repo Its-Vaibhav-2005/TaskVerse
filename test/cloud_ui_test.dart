@@ -96,6 +96,20 @@ void main() {
       await tester.tap(switchButton);
       expect(operation, 'switchTracker');
       expect(payload, 'exam');
+      final deleteButton = find.text('Delete tracker & sheet').first;
+      await tester.ensureVisible(deleteButton);
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
+      expect(find.text('Delete Regular?'), findsOneWidget);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(operation, 'switchTracker');
+      await tester.tap(deleteButton);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move to Trash'));
+      await tester.pumpAndSettle();
+      expect(operation, 'deleteTracker');
+      expect(payload, 'regular');
       expect(tester.takeException(), isNull);
     },
   );

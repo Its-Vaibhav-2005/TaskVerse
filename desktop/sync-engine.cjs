@@ -30,7 +30,7 @@ class SyncEngine {
       let local=db.getPreference('syncState',{});
       if(resolve==='remote') {
         if(history.heads.length!==1)throw Error('Several devices created separate versions. Keep this tracker as a new version or recover a backup manually.');
-        this.manager.applyRemote(id,history.heads[0].snapshot,history.heads[0].id);return;
+        this.manager.applyRemote(id,history.heads[0].snapshot,history.heads[0].id);await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),this.manager.profile(id).alias);return;
       }
       // Recover uncertain network writes by snapshot ID, without appending duplicate backups.
       if(local.pending&&history.snapshots.some(s=>s.id===local.pending.id)) {
@@ -40,8 +40,8 @@ class SyncEngine {
       if((history.heads.length>1||local.dirty&&head&&head.id!==local.base)&&resolve!=='local') {
         this.manager.updateSync(id,{status:'conflict',error:'This tracker changed on another device. Choose which version to continue with; both versions remain backed up.'});return;
       }
-      if(!local.dirty&&head&&head.id!==local.base) {this.manager.applyRemote(id,head.snapshot,head.id);return;}
-      if(!local.dirty&&head) {this.manager.updateSync(id,{status:'synced',lastSync:new Date().toISOString(),error:null});return;}
+      if(!local.dirty&&head&&head.id!==local.base) {this.manager.applyRemote(id,head.snapshot,head.id);await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),this.manager.profile(id).alias);return;}
+      if(!local.dirty&&head) {await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),profile.alias);this.manager.updateSync(id,{status:'synced',lastSync:new Date().toISOString(),error:null});return;}
       const snapshot=this.manager.snapshot(id),revision=local.revision||0;
       let pending=local.pending;
       if(!pending||pending.revision!==revision||resolve==='local') {
@@ -54,7 +54,7 @@ class SyncEngine {
       if(!verified.snapshots.some(s=>s.id===pending.id))throw Error('Google has not confirmed the backup yet. It will be checked again automatically.');
       this.manager.markSynced(id,revision,pending.id);
       if(verified.heads.length>1)this.manager.updateSync(id,{status:'conflict',error:'A second device synced at the same time. All versions are kept; choose a version to continue.'});
-      else {try {await this.remote.updateSummary?.(profile.sheet_id,snapshot,profile.alias);}catch(_){/* Versioned backup is authoritative; summary can be refreshed on the next write. */}}
+      else await this.remote.updateSummary?.(profile.sheet_id,snapshot,profile.alias);
       this.backoff.delete(id);
     } catch(e) {
       this.backoff.set(id,Math.min((this.backoff.get(id)||15000)*2,300000));

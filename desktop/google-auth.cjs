@@ -34,6 +34,23 @@ class GoogleAuth {
     if(persist)this.writeVault('google-client',{installed:c});
   }
   status() {return {configured:!!this.client,connected:!!this.client?.credentials?.refresh_token,identity:this.identity,signingIn:this.signingIn};}
+  async refreshProfile() {
+    if(!this.status().connected||!this.identity)return;
+    const identityId=this.identity.id;
+    try {
+      const response=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{headers:{Authorization:`Bearer ${await this.token()}`},signal:AbortSignal.timeout(10000)});
+      if(!response.ok)return;const profile=await response.json();
+      if(profile.sub!==identityId)return;
+      let photo=null;
+      if(profile.picture){const url=new URL(profile.picture);if(url.protocol==='https:'&&url.hostname.endsWith('.googleusercontent.com')){
+        const image=await fetch(url,{signal:AbortSignal.timeout(10000)});
+        if(image.ok&&/^image\//.test(image.headers.get('content-type')||'')){const bytes=Buffer.from(await image.arrayBuffer());if(bytes.length<=1024*1024)photo=bytes.toString('base64');}
+      }}
+      if(this.identity?.id!==identityId||!this.status().connected)return;
+      this.identity={...this.identity,name:profile.name||this.identity.name,photo:photo||this.identity.photo||null};
+      this.writeVault('google-tokens',{clientId:this.clientId,tokens:this.client.credentials,identity:this.identity});
+    }catch(_){/* Profile images are optional; offline use remains available. */}
+  }
   async signIn() {
     if(!this.client)throw Error('Google sign-in setup is not finished yet. Configure the TrackVerse desktop OAuth client first.');
     if(this.signingIn)throw Error('Google sign-in is already open in your browser.');
@@ -70,6 +87,7 @@ class GoogleAuth {
       const identity={id:payload.sub,email:payload.email,name:payload.name||payload.email};
       this.writeVault('google-tokens',{clientId:this.clientId,tokens,identity});
       this.client.setCredentials(tokens);this.identity=identity;
+      await this.refreshProfile();
       return this.status();
     } catch(error) {
       this.client.setCredentials(previousTokens);this.identity=previousIdentity;throw error;

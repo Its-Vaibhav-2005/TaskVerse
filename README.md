@@ -21,6 +21,14 @@ The app reads the device's local date and time. It updates at midnight, on resum
 
 ## Storage and calculations
 
+The sidebar shows your Google name and profile photo when available. **Online / Offline** reflects an internet reachability check, independently of Google sign-in, and updates within about 15 seconds.
+
+In **Settings → Trackers & cloud backup**, **Delete tracker & sheet** asks for confirmation, moves the spreadsheet to Drive's Trash, and removes the tracker from the app. Its SQLite database is archived in `.local-data/deleted-trackers/`. Restore the spreadsheet in Drive, then use **Find my trackers** to reconnect it. The local-only tracker is retained.
+
+Month tabs for Google trackers are mirrored to the matching spreadsheet as `Oct 2026`, with scheduled checkboxes, completion formulas, and daily progress charts. These views are generated from the app; editing them does not import check-ins into TrackVerse. Offline additions wait for the next successful sync. The versioned history remains the source for backup recovery.
+
+Google development setup uses your own desktop OAuth client in the ignored `.config/google-client.json`, with Sheets and Drive APIs enabled and scopes `openid`, `email`, `profile`, and `drive.file`. Tokens are encrypted on Windows. Never upload OAuth configurations or local user data to GitHub.
+
 The Windows preview runs the shared Flutter UI inside an Electron desktop shell. It uses Node's native SQLite engine and a normalized database stored on disk, through a restricted IPC bridge. The renderer has no Node access. No account, network service or internet connection is required; rendering assets are bundled locally.
 
 Monthly completion is completed scheduled check-ins divided by scheduled opportunities through today. Future dates and dates before creation are excluded. Streaks count consecutive scheduled days; missing today does not break a streak until the day finishes. Weekly groups are days 1-7, 8-14 and so on. The Today card always represents the actual current date.

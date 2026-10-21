@@ -1,6 +1,7 @@
 const {MAGIC,HISTORY,COLUMNS}=require('./sheet-journal.cjs');
 const SHEETS='https://sheets.googleapis.com/v4/spreadsheets';
 const DRIVE='https://www.googleapis.com/drive/v3/files';
+const {monthRequests}=require('./month-sheets.cjs');
 class GoogleSheets {
   constructor(auth,{fetchImpl=fetch}={}) {this.auth=auth;this.fetch=fetchImpl;this.requests=[];}
   async request(url,{method='GET',body}={}) {
@@ -42,6 +43,10 @@ class GoogleSheets {
     if(info.appProperties?.trackverse!=='1')throw Error('Choose a tracker created by TrackVerse.');
     return {title:info.name,sharing:info.permissions?.some(p=>p.type==='anyone')?'Anyone with link':'Private · Google account only'};
   }
+  async trashTracker(id) {
+    await this.inspect(id);
+    await this.request(`${DRIVE}/${id}`,{method:'PATCH',body:{trashed:true}});
+  }
   async read(id) {
     const response=await this.request(`${SHEETS}/${id}/values/${encodeURIComponent(`'${HISTORY}'!A:G`)}`);
     const rows=response.values||[];
@@ -53,10 +58,10 @@ class GoogleSheets {
   }
   async updateSummary(id,snapshot,alias) {
     const rows=[['TrackVerse · '+alias,'Category','Schedule','Created','Check-ins'],...snapshot.habits.map(h=>[h.name,h.category,h.weekdays.map(d=>['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d-1]).join(', '),h.created,String(h.checks.length)]),[''],['Month tabs',snapshot.months.map(d=>d.slice(0,7)).join(', ')],['Last backed up',new Date().toISOString()]];
-    const metadata=await this.request(`${SHEETS}/${id}?fields=sheets(properties(sheetId,title,gridProperties))`);
+    const metadata=await this.request(`${SHEETS}/${id}?fields=sheets(properties(sheetId,title,gridProperties),charts(chartId))`);
     const tab=metadata.sheets.find(s=>s.properties.title==='Habits');
     if(!tab)return;
-    const requests=[];const size=tab.properties.gridProperties.rowCount;
+    const requests=monthRequests(snapshot,metadata);const size=tab.properties.gridProperties.rowCount;
     if(rows.length>size)requests.push({appendDimension:{sheetId:tab.properties.sheetId,dimension:'ROWS',length:rows.length-size}});
     requests.push({updateCells:{range:{sheetId:tab.properties.sheetId,startRowIndex:0,endRowIndex:Math.max(rows.length,size),startColumnIndex:0,endColumnIndex:5},rows:rows.map(row=>({values:row.map(v=>({userEnteredValue:{stringValue:v}}))})),fields:'userEnteredValue'}});
     await this.request(`${SHEETS}/${id}:batchUpdate`,{method:'POST',body:{requests}});

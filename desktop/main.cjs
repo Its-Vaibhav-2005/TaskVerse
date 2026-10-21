@@ -10,8 +10,9 @@ const {SyncEngine}=require('./sync-engine.cjs');
 protocol.registerSchemesAsPrivileged([{scheme:'trackverse',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
 const gotLock=app.requestSingleInstanceLock();
 if(!gotLock) app.quit();
-let win,store,manager,auth,sheets,sync;
-function cloudState() {return {...auth.status(),activeId:manager.activeId,profiles:manager.list(),onboarded:store.getPreference('cloudOnboarded',false)};}
+let win,store,manager,auth,sheets,sync,connectionTimer,online=false;
+async function checkConnection(){try{const response=await net.fetch('https://www.gstatic.com/generate_204',{cache:'no-store',signal:AbortSignal.timeout(7000)});online=response.status===204;}catch(_){online=false;}}
+function cloudState() {return {...auth.status(),online:online&&net.isOnline(),activeId:manager.activeId,profiles:manager.list(),onboarded:store.getPreference('cloudOnboarded',false)};}
 async function discoverTrackers() {
   const files=await sheets.listTrackers();
   for(const file of files) {
@@ -38,6 +39,7 @@ app.whenReady().then(async()=>{
   const clientConfig=app.isPackaged?path.join(process.resourcesPath,'google-client.json'):path.join(app.getAppPath(),'.config','google-client.json');
   if(!auth.status().configured&&fs.existsSync(clientConfig))auth.configure(JSON.parse(fs.readFileSync(clientConfig,'utf8')));
   sheets=new GoogleSheets(auth);
+  checkConnection();connectionTimer=setInterval(checkConnection,15000);auth.refreshProfile();
   sync=new SyncEngine(manager,sheets);sync.start();
   if(auth.status().connected)sync.schedule(manager.activeId);
   nativeTheme.themeSource=store.getTheme();
@@ -70,6 +72,14 @@ app.whenReady().then(async()=>{
       case 'googleSignOut':auth.signOut();return JSON.stringify(cloudState());
       case 'discoverTrackers':await discoverTrackers();return JSON.stringify(cloudState());
       case 'createTracker':{const data=JSON.parse(payload);return JSON.stringify(await createTracker(data.alias,!!data.copyCurrent));}
+      case 'deleteTracker':{
+        const p=manager.profile(payload);
+        if(!p?.sheet_id||p.account!==auth.identity?.id)throw Error('Connect the Google account that owns this tracker first.');
+        if(sync.running.has(p.id))throw Error('This tracker is syncing. Try again when it finishes.');
+        sync.running.add(p.id);
+        try{await sheets.trashTracker(p.sheet_id);manager.remove(p.id);sync.queue.delete(p.id);}finally{sync.running.delete(p.id);}
+        return JSON.stringify(cloudState());
+      }
       case 'switchTracker':manager.activate(payload);sync.schedule(payload);return JSON.stringify(cloudState());
       case 'renameTracker':{const data=JSON.parse(payload);manager.rename(data.id,data.alias);manager.mutate(data.id,()=>{});sync.schedule(data.id);return JSON.stringify(cloudState());}
       case 'syncTracker':{const data=JSON.parse(payload||'{}');await sync.sync(data.id||workspaceId,{force:true,resolve:data.resolve});return JSON.stringify(cloudState());}
@@ -105,4 +115,4 @@ app.whenReady().then(async()=>{
   await win.loadURL('trackverse://app/');
 }).catch(e=>{dialog.showErrorBox('TrackVerse could not start',String(e));app.quit();});
 app.on('window-all-closed',()=>app.quit());
-app.on('will-quit',()=>{sync?.stop();auth?.cancel?.();manager?.close();});
+app.on('will-quit',()=>{clearInterval(connectionTimer);sync?.stop();auth?.cancel?.();manager?.close();});

@@ -399,6 +399,14 @@ class CloudPanel extends StatelessWidget {
                         ),
                       if (remote) ...[
                         TextButton.icon(
+                          onPressed:
+                              busy || !connected || state['online'] == false
+                              ? null
+                              : () => _delete(context, p),
+                          icon: const Icon(Icons.delete_outline, size: 15),
+                          label: const Text('Delete tracker & sheet'),
+                        ),
+                        TextButton.icon(
                           onPressed: busy
                               ? null
                               : () => action(
@@ -471,6 +479,31 @@ class CloudPanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _delete(BuildContext context, Map<String, dynamic> p) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete ${p['alias']}?'),
+        content: const Text(
+          'Move this Google spreadsheet to Drive’s Trash and remove its tracker from the app? A local recovery archive will be kept. Other trackers are unaffected. You can restore the sheet from Drive’s Trash, then use Find my trackers.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Move to Trash'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await action('deleteTracker', p['id'] as String, true);
+    }
   }
 
   Future<void> _resolve(
