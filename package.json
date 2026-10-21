@@ -1,0 +1,52 @@
+{
+  "name": "trackverse",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A private, productive habit tracker with native SQLite storage.",
+  "author": "TrackVerse",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "start": "electron .",
+    "test:desktop": "node --test desktop/*.test.cjs",
+    "dist:win": "electron-builder --win nsis --x64",
+    "pack:win": "electron-builder --win dir --x64"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "app.trackverse.desktop",
+    "productName": "TrackVerse",
+    "asar": true,
+    "extraResources": [{"from":".config/google-client.json","to":"google-client.json"}],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**/*.cjs",
+      "!desktop/**/*.test.cjs",
+      "build/web/**/*",
+      "assets/trackverse.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/trackverse.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "TrackVerse-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false
+    }
+  },
+  "dependencies": {
+    "google-auth-library": "^11.3.1"
+  }
+}
