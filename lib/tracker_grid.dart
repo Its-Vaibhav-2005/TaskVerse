@@ -69,7 +69,7 @@ class _TrackerGridState extends State<TrackerGrid> {
             child: Column(
               children: [
                 Container(
-                  height: 142,
+                  height: 150,
                   padding: EdgeInsets.all(14),
                   alignment: Alignment.bottomLeft,
                   decoration: cellDecoration(color: colors.raised, right: true),
@@ -143,6 +143,8 @@ class _TrackerGridState extends State<TrackerGrid> {
                               SizedBox(height: 4),
                               Text(
                                 h.category,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 9,
                                   color: colors.muted,
@@ -317,7 +319,7 @@ class _TrackerGridState extends State<TrackerGrid> {
   );
   Widget summaryHeader(String title, double width) => Container(
     width: width,
-    height: 142,
+    height: 150,
     alignment: Alignment.bottomCenter,
     padding: EdgeInsets.only(bottom: 20),
     decoration: cellDecoration(color: colors.raised, right: true),
@@ -339,7 +341,7 @@ class _TrackerGridState extends State<TrackerGrid> {
     final rate = scheduled == 0 ? 0.0 : done / scheduled;
     return Container(
       width: 36,
-      height: 117,
+      height: 125,
       decoration: cellDecoration(
         color: color.withValues(alpha: today ? 0.16 : 0.07),
         right: (i + 1) % 7 == 0 || i == length - 1,

@@ -9,7 +9,7 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "test:desktop": "node --test desktop/*.test.cjs",
-    "dist:win": "electron-builder --win nsis --x64",
+    "dist:win": "node tool/validate-release.cjs && electron-builder --win msi --x64 --publish never",
     "pack:win": "electron-builder --win dir --x64"
   },
   "devDependencies": {
@@ -20,7 +20,12 @@
     "appId": "app.trackverse.desktop",
     "productName": "TrackVerse",
     "asar": true,
-    "extraResources": [{"from":".config/google-client.json","to":"google-client.json"}],
+    "extraResources": [
+      {
+        "from": ".config/google-client.json",
+        "to": "google-client.json"
+      }
+    ],
     "directories": {
       "output": "dist"
     },
@@ -29,12 +34,14 @@
       "!desktop/**/*.test.cjs",
       "build/web/**/*",
       "assets/trackverse.ico",
-      "package.json"
+      "package.json",
+      "!desktop/sample-tracker.cjs",
+      "!desktop/fixtures/**"
     ],
     "win": {
-      "target": "nsis",
+      "target": "msi",
       "icon": "assets/trackverse.ico",
-      "signAndEditExecutable": false
+      "signExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -44,7 +51,19 @@
       "createStartMenuShortcut": true,
       "artifactName": "TrackVerse-Setup-${version}.${ext}",
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": false,
+      "runAfterFinish": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "artifactName": "TrackVerse-Setup-${version}-x64.${ext}",
+      "additionalLightArgs": [
+        "-sval"
+      ]
+    },
+    "msiProjectCreated": "tool/msi-project.cjs"
   },
   "dependencies": {
     "google-auth-library": "^11.3.1"

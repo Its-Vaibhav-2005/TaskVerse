@@ -35,6 +35,7 @@ app.whenReady().then(async()=>{
   const dataPath=process.env.TRACKVERSE_DATA_DIR||app.getPath('userData');
   fs.mkdirSync(dataPath,{recursive:true});
   manager=new WorkspaceManager(dataPath);store=manager.root;
+  manager.removeSamples();
   auth=new GoogleAuth(dataPath,{safeStorage,openBrowser:url=>shell.openExternal(url)});
   const clientConfig=app.isPackaged?path.join(process.resourcesPath,'google-client.json'):path.join(app.getAppPath(),'.config','google-client.json');
   if(!auth.status().configured&&fs.existsSync(clientConfig))auth.configure(JSON.parse(fs.readFileSync(clientConfig,'utf8')));
@@ -86,11 +87,17 @@ app.whenReady().then(async()=>{
       case 'openTrackerSheet':{const p=manager.profile(payload||workspaceId);if(p?.sheet_id)await shell.openExternal(`https://docs.google.com/spreadsheets/d/${p.sheet_id}/edit`);return '{}';}
       case 'load':return JSON.stringify(manager.readActive());
       case 'getTheme':return store.getTheme();
+      case 'getTypography':return JSON.stringify(store.getPreference('typography',{step:0,family:'Inter'}));
+      case 'setTypography':{const value=JSON.parse(payload);if(!Number.isInteger(value.step)||value.step< -2||value.step>4||!['Inter','Lora','JetBrains Mono'].includes(value.family))throw Error('Invalid font preference');store.setPreference('typography',value);return '{}';}
+      case 'savePlan':{
+        const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);
+        manager.mutate(workspaceId,db=>db.savePlan(data.habits,data.months,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);
+      }
       case 'setTheme':store.setTheme(payload);nativeTheme.themeSource=payload;return '{}';
       case 'checkIn':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.checkIn(data.id,data.day,data.complete));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'save':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.save(data.habits,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'loadMonths':return JSON.stringify(local.loadMonths());
-      case 'saveMonths':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.saveMonths(data.months,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
+      case 'saveMonths':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.savePlan(db.load(),data.months,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'restore':manager.mutate(workspaceId,db=>db.restore(JSON.parse(payload),true));sync.schedule(workspaceId);return JSON.stringify(local.loadMonths());
       case 'export':{
         const result=await dialog.showSaveDialog(win,{defaultPath:`TrackVerse-backup-${new Date().toISOString().slice(0,10)}.json`,filters:[{name:'TrackVerse backup',extensions:['json']}]});

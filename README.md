@@ -1,21 +1,41 @@
 # TrackVerse
 
-TrackVerse is a local-first habit tracker. This is a Windows development preview; installer packaging is on hold until the user reviews the UI and features.
+TrackVerse is a local-first Windows habit tracker with an MSI installer and optional Google Sheets backup.
+
+**[Download Windows x64 MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest)** · **[Website](https://its-vaibhav-2005.github.io/TaskVerse/)** · **[Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)**
+
+## Watch the quick-start guide
+
+[![Watch the TrackVerse walkthrough](website/media/walkthrough-preview.gif)](https://its-vaibhav-2005.github.io/TaskVerse/#walkthrough)
+
+**[Watch the full video with audio](https://its-vaibhav-2005.github.io/TaskVerse/#walkthrough)** · [Download MP4](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v1.0.0/TrackVerse-Quick-Start.mp4)
+
+A 3-minute, 1080p illustrated guide with English narration, captions, and chapter markers: setup, new habits, daily check-ins, monthly plans, dashboards, appearance, backups, and separate trackers. Only demonstration data appears. The animated preview above is silent; open the full video for narration.
+
+## Install on Windows
+
+Download the MSI and its SHA-256 checksum from [Releases](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest), then run the installer. Windows x64 is the currently packaged target. The installer is unsigned, so Windows may identify an unknown publisher. New users can choose local-only setup or optional Google sign-in.
 
 ## Open the preview
 
-Double-click `Start TrackVerse.cmd`. The downloaded desktop runtime and built UI assets are ready in this workspace. Development data is saved in `.local-data/trackverse.sqlite3`. Six sample habits are loaded for review.
+Double-click `Start TrackVerse.cmd` for development. Development data is saved in `.local-data/trackverse.sqlite3`. New installations start empty, with Google sign-in or local-only setup. Sample generators and demo controls are removed.
 
 ## Using TrackVerse
 
 1. Click **New habit**, enter a name, choose a category, repeat days, color and icon, then click **Create habit**.
 2. Click today's scheduled cell to complete it; click again today to undo. Progress updates automatically. Past dates are locked, but saved completions remain visible. Future dates and days before habit creation are disabled.
-3. Click **+** at the end of the month tabs. The dialog defaults to the next month. Choose a month and year and click **Add month**. Tabs use labels such as `Oct 2026`. Existing habits carry forward; completion records stay with their dates.
+3. Click **+** at the end of the month tabs, choose a month/year, then choose **Use same habits** from the nearest earlier tab or **Start fresh**. Month assignments are saved independently. When creating a habit, choose **This month only** or **All months** (all existing month tabs).
 4. Use the **...** menu beside a habit to edit or delete it. Deletion requires confirmation.
 5. Search by habit name or filter by category above the grid.
-6. Scroll below the grid for weekly completion rings, the consistency curve and today's progress. **Insights** shows the progress dashboards without the grid.
+6. A compact motivation card and 2×2 KPI grid appear above the month controls. Search, category filter, and **New habit** share one toolbar row. The consistency graph and Today card remain at the bottom. A subtle copy of the same consistency curve appears behind the fixed-height navbar.
 7. Use **Settings** to export or restore JSON backups. Restoring replaces current data after confirmation.
 8. Use the sun/moon button in the top bar or **Settings → Appearance** to switch between light and dark mode. The preference is saved locally.
+9. In **Settings → Appearance → Typography**, increase or decrease all text by one point, or choose **Inter**, **Lora**, or **JetBrains Mono**. Fonts and their open-source licenses are bundled for offline use. Reset restores Inter at the default size.
+10. Future month tabs have a close button with confirmation. The current month and past months cannot be deleted. SQLite enforces the date rule too. Cloud sync mirrors month assignments and removes managed future Google tabs when they are deleted in the app.
+
+Choose from 26 named habit icons, 16 categories, and 16 colors. Existing habits keep their original icon/color indexes and completion history after the database migration.
+
+Previously generated local samples are retired on startup. Their separate SQLite file is archived outside the installation bundle. Real local habits and connected Google trackers are preserved.
 
 The app reads the device's local date and time. It updates at midnight, on resume, and after device clock changes. Windows also rechecks the system date immediately before each SQLite check-in, so yesterday cannot be edited through a screen left open overnight. At month boundaries a new current-month tab is added automatically if needed.
 
@@ -63,8 +83,14 @@ npm run test:desktop
 
 Tests cover schedules, streaks, leap days, narrow layouts, check-in actions, month selection, SQLite reopening and failed-write/restore rollback.
 
-## Packaging: deferred
+## Windows MSI packaging
 
-No installer has been generated. After user review and an explicit request to package, `npm run dist:win` can create a per-user Windows x64 NSIS installer. Code signing is not configured. Preview data is excluded from packages; export and restore a backup to transfer it.
+Build the Flutter UI, then run `npm run dist:win` to produce `dist/TrackVerse-Setup-1.0.0-x64.msi`. This is an assisted, per-user Windows x64 MSI with desktop and Start menu shortcuts. The build does not publish to GitHub. Code signing is not configured, so Windows may show an unknown publisher.
+
+The release preflight permits only a Desktop OAuth client configuration from ignored `.config/google-client.json`. Google treats installed-app clients as public clients: the distributed client configuration cannot be kept confidential inside an MSI. Authentication uses PKCE, state validation, and a loopback callback. Each user grants their own access. Refresh/access tokens and cached account information stay encrypted on that user's Windows device and are never transferred through the installer. Service-account keys are not accepted for release.
+
+The package allowlist contains application code, production dependencies, built UI assets, the app icon, and the desktop OAuth configuration. Development databases, exported backups, `.local-data`, encrypted credential vaults, tests, and sample fixtures are excluded. Use the application's export/restore to transfer your own habits; never copy a Google token vault between users or machines.
+
+WiX ICE validation is disabled in this environment because the host's Windows Installer policy blocks it; system policy and elevation settings are unchanged. `node tool/audit-release.cjs` inspects the application archive and creates a SHA-256 checksum and release audit. Test installation/uninstallation on a clean Windows machine before wider distribution. Installer compression uses standard MSZIP.
 
 Linux and Android platform scaffolding is present for future work; those targets have not been built or verified.

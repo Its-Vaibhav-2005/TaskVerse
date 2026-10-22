@@ -6,7 +6,16 @@ import 'package:trackverse/model.dart';
 import 'package:trackverse/storage.dart';
 
 class PreviewStorage extends HabitStorage {
-  List<Habit> habits = demoHabits(DateTime.now());
+  List<Habit> habits = [
+    Habit(
+      id: 'test',
+      name: 'Read',
+      category: 'Learning',
+      color: 0,
+      icon: 0,
+      created: DateTime.now(),
+    ),
+  ];
   @override
   Future<void> open() async {}
   @override

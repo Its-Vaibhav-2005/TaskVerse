@@ -58,7 +58,7 @@ class GoogleSheets {
   }
   async updateSummary(id,snapshot,alias) {
     const rows=[['TrackVerse · '+alias,'Category','Schedule','Created','Check-ins'],...snapshot.habits.map(h=>[h.name,h.category,h.weekdays.map(d=>['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d-1]).join(', '),h.created,String(h.checks.length)]),[''],['Month tabs',snapshot.months.map(d=>d.slice(0,7)).join(', ')],['Last backed up',new Date().toISOString()]];
-    const metadata=await this.request(`${SHEETS}/${id}?fields=sheets(properties(sheetId,title,gridProperties),charts(chartId))`);
+    const metadata=await this.request(`${SHEETS}/${id}?fields=sheets(properties(sheetId,title,gridProperties),charts(chartId),developerMetadata(metadataKey,metadataValue))`);
     const tab=metadata.sheets.find(s=>s.properties.title==='Habits');
     if(!tab)return;
     const requests=monthRequests(snapshot,metadata);const size=tab.properties.gridProperties.rowCount;

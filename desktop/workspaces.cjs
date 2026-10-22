@@ -35,6 +35,21 @@ class WorkspaceManager {
     return id;
   }
   rename(id,alias) {this.root.db.prepare('UPDATE workspaces SET alias = ? WHERE id = ?').run(validateAlias(alias),id);}
+  removeSamples(){
+    const sample=this.profile('local-sample');
+    if(sample&&!sample.sheet_id){
+      const fallback=this.list().find(p=>p.id!=='local-sample'&&p.sheet_id)?.id||'local';
+      if(this.activeId===sample.id)this.activate(fallback);
+      this.stores.get(sample.id)?.close();this.stores.delete(sample.id);
+      const file=path.join(this.directory,'workspaces','local-sample.sqlite3');
+      if(fs.existsSync(file)){const archive=path.join(this.directory,'deleted-trackers');fs.mkdirSync(archive,{recursive:true});fs.renameSync(file,path.join(archive,`retired-sample-${Date.now()}.sqlite3`));}
+      this.root.db.prepare('DELETE FROM workspaces WHERE id = ?').run(sample.id);
+    }
+    for(const p of this.list().filter(p=>!p.sheet_id)){
+      const db=this.store(p.id),habits=db.load(),real=habits.filter(h=>!/^demo-\d+$/.test(h.id));
+      if(real.length!==habits.length)this.mutate(p.id,store=>store.save(real,true));
+    }
+  }
   mutate(id,action) {
     const db=this.store(id);db.db.exec('BEGIN IMMEDIATE');
     try {action(db);const state=db.getPreference('syncState',{});db.setPreference('syncState',{...state,revision:(state.revision||0)+1,dirty:true,status:this.profile(id).sheet_id?'pending':'local',error:null});db.db.exec('COMMIT');}

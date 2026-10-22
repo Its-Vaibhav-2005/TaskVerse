@@ -1,15 +1,52 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'desktop_bridge.dart';
 
 class Appearance extends ChangeNotifier {
   ThemeMode mode = ThemeMode.light;
+  int fontStep = 0;
+  String fontFamily = 'Inter';
+  static const fonts = ['Inter', 'Lora', 'JetBrains Mono'];
+  Future<void> setTypography({int? step, String? family}) async {
+    final oldStep = fontStep, oldFont = fontFamily;
+    fontStep = (step ?? fontStep).clamp(-2, 4);
+    fontFamily = fonts.contains(family) ? family! : fontFamily;
+    notifyListeners();
+    try {
+      final value = jsonEncode({'step': fontStep, 'family': fontFamily});
+      if (isWindowsDesktop) {
+        await desktopRequest('setTypography', value);
+      } else {
+        await (await SharedPreferences.getInstance()).setString(
+          'typography',
+          value,
+        );
+      }
+    } catch (_) {
+      fontStep = oldStep;
+      fontFamily = oldFont;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   Future<void> load() async {
     try {
       final saved = isWindowsDesktop
           ? await desktopRequest('getTheme')
           : (await SharedPreferences.getInstance()).getString('appearance');
       mode = saved == 'dark' ? ThemeMode.dark : ThemeMode.light;
+      final raw = isWindowsDesktop
+          ? await desktopRequest('getTypography')
+          : (await SharedPreferences.getInstance()).getString('typography');
+      if (raw != null) {
+        final type = jsonDecode(raw) as Map;
+        fontStep = ((type['step'] as num?)?.toInt() ?? 0).clamp(-2, 4);
+        if (fonts.contains(type['family'])) {
+          fontFamily = type['family'] as String;
+        }
+      }
       notifyListeners();
     } catch (_) {
       /* Keep a usable light theme if preferences cannot be read. */
@@ -72,7 +109,7 @@ ThemeData trackVerseTheme(Brightness brightness) {
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
-    fontFamily: 'Segoe UI',
+    fontFamily: appearance.fontFamily,
     scaffoldBackgroundColor: dark
         ? const Color(0xFF121A19)
         : const Color(0xFFF8F9FC),

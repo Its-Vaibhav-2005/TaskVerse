@@ -15,33 +15,42 @@ class TrackVerseDatabase {
       CREATE TABLE IF NOT EXISTS months (month TEXT PRIMARY KEY);
       CREATE TABLE IF NOT EXISTS preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       PRAGMA user_version = 2;`);
+    if(!this.db.prepare('PRAGMA table_info(habits)').all().some(c=>c.name==='months'))this.db.exec('ALTER TABLE habits ADD COLUMN months TEXT');
+    this.db.exec('PRAGMA user_version = 3');
   }
   load() {
     const checks = this.db.prepare('SELECT * FROM completions').all();
-    return this.db.prepare('SELECT * FROM habits ORDER BY rowid').all().map(h => ({
-      ...h, weekdays: JSON.parse(h.weekdays), checks: checks.filter(c=>c.habit_id===h.id).map(c=>c.day)
+    return this.db.prepare('SELECT * FROM habits ORDER BY rowid').all().map(({months,...h}) => ({
+      ...h, ...(months?{months:JSON.parse(months)}:{}), weekdays: JSON.parse(h.weekdays), checks: checks.filter(c=>c.habit_id===h.id).map(c=>c.day)
     }));
   }
   save(habits, inTransaction=false) {
     if(!Array.isArray(habits)||habits.length>10000) throw Error('Invalid habit data');
     const ids=new Set();
     for(const h of habits) {
-      if(!h||typeof h.id!=='string'||!h.id||ids.has(h.id)||typeof h.name!=='string'||!h.name.trim()||h.name.length>60||typeof h.category!=='string'||!Number.isInteger(h.color)||h.color<0||h.color>4||!Number.isInteger(h.icon)||h.icon<0||h.icon>7||!validDay(h.created)||!Array.isArray(h.weekdays)||!h.weekdays.length||h.weekdays.some(d=>!Number.isInteger(d)||d<1||d>7)||!Array.isArray(h.checks)||h.checks.some(d=>!validDay(d))) throw Error('Invalid habit data');
+      if(!h||typeof h.id!=='string'||!h.id||ids.has(h.id)||typeof h.name!=='string'||!h.name.trim()||h.name.length>60||typeof h.category!=='string'||!Number.isInteger(h.color)||h.color<0||h.color>15||!Number.isInteger(h.icon)||h.icon<0||h.icon>25||!validDay(h.created)||!Array.isArray(h.weekdays)||!h.weekdays.length||h.weekdays.some(d=>!Number.isInteger(d)||d<1||d>7)||!Array.isArray(h.checks)||h.checks.some(d=>!validDay(d))) throw Error('Invalid habit data');
+      if(h.months!=null&&(!Array.isArray(h.months)||h.months.some(m=>!validDay(m)||!m.endsWith('-01'))))throw Error('Invalid habit month scope');
       ids.add(h.id);
     }
     if(!inTransaction)this.db.exec('BEGIN IMMEDIATE');
     try {
       this.db.exec('DELETE FROM completions; DELETE FROM habits;');
-      const insert=this.db.prepare('INSERT INTO habits VALUES (?, ?, ?, ?, ?, ?, ?)');
+      const insert=this.db.prepare('INSERT INTO habits VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
       const check=this.db.prepare('INSERT INTO completions VALUES (?, ?)');
       for(const h of habits) {
-        insert.run(h.id,h.name,h.category,h.color,h.icon,h.created,JSON.stringify(h.weekdays));
+        insert.run(h.id,h.name,h.category,h.color,h.icon,h.created,JSON.stringify(h.weekdays),h.months==null?null:JSON.stringify(h.months));
         for(const day of h.checks) check.run(h.id,day);
       }
       if(!inTransaction)this.db.exec('COMMIT');
     } catch(e) { if(!inTransaction)this.db.exec('ROLLBACK'); throw e; }
   }
   loadMonths() { return this.db.prepare('SELECT month FROM months ORDER BY month').all().map(r=>r.month); }
+  savePlan(habits,months,inTransaction=false,systemNow=new Date()) {
+    const current=`${systemNow.getFullYear()}-${String(systemNow.getMonth()+1).padStart(2,'0')}-01`;
+    if(!Array.isArray(months)||this.loadMonths().some(m=>!months.includes(m)&&m<=current))throw Error('Current and past months cannot be deleted.');
+    if(!inTransaction)this.db.exec('BEGIN IMMEDIATE');
+    try{this.save(habits,true);this.saveMonths(months,true);if(!inTransaction)this.db.exec('COMMIT');}catch(e){if(!inTransaction)this.db.exec('ROLLBACK');throw e;}
+  }
   saveMonths(months, inTransaction=false) {
     if(!Array.isArray(months)||months.some(m=>!validDay(m)||!m.endsWith('-01'))) throw Error('Invalid month tabs');
     if(!inTransaction)this.db.exec('BEGIN IMMEDIATE');
@@ -71,7 +80,7 @@ class TrackVerseDatabase {
     if(day!==localDay)throw Error('Only today can be changed. Past days are locked.');
     const habit=this.db.prepare('SELECT * FROM habits WHERE id = ?').get(id);
     const weekday=systemNow.getDay()||7;
-    if(!habit||habit.created>day||!JSON.parse(habit.weekdays).includes(weekday)||typeof complete!=='boolean')throw Error('This habit is not scheduled today.');
+    if(!habit||habit.created>day||habit.months&&!JSON.parse(habit.months).includes(day.slice(0,7)+'-01')||!JSON.parse(habit.weekdays).includes(weekday)||typeof complete!=='boolean')throw Error('This habit is not scheduled today.');
     if(complete)this.db.prepare('INSERT OR IGNORE INTO completions VALUES (?, ?)').run(id,day);
     else this.db.prepare('DELETE FROM completions WHERE habit_id = ? AND day = ?').run(id,day);
   }

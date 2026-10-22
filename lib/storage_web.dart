@@ -88,6 +88,28 @@ class HabitStorage {
     }
   }
 
+  Future<void> savePlan(List<Habit> habits, List<DateTime> months) async {
+    if (isWindowsDesktop) {
+      desktopRevision =
+          jsonDecode(
+                await desktopRequest(
+                  'savePlan',
+                  jsonEncode({
+                    'workspaceId': desktopWorkspaceId,
+                    'revision': desktopRevision,
+                    'habits': habits.map((h) => h.toJson()).toList(),
+                    'months': months.map(dayKey).toList(),
+                  }),
+                ),
+              )
+              as int;
+      _months = [...months];
+    } else {
+      await save(habits);
+      await saveMonths(months);
+    }
+  }
+
   Future<void> close() async {}
   Future<void> setCheckIn(String id, String day, bool complete) async {
     desktopRevision =

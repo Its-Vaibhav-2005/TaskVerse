@@ -59,9 +59,25 @@ class TrackVerse extends StatelessWidget {
       theme: trackVerseTheme(Brightness.light),
       darkTheme: trackVerseTheme(Brightness.dark),
       themeMode: appearance.mode,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: AppTextScaler(appearance.fontStep)),
+        child: child!,
+      ),
       home: const Home(),
     ),
   );
+}
+
+class AppTextScaler extends TextScaler {
+  final int step;
+  const AppTextScaler(this.step);
+  @override
+  double scale(double fontSize) =>
+      (fontSize + step).clamp(6, double.infinity).toDouble();
+  @override
+  double get textScaleFactor => (13 + step) / 13;
 }
 
 class Home extends StatefulWidget {
@@ -323,6 +339,14 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<void> changeFontSize(int delta) async {
+    try {
+      await appearance.setTypography(step: appearance.fontStep + delta);
+    } catch (_) {
+      if (mounted) message('Could not save font size.');
+    }
+  }
+
   Future<void> init() async {
     try {
       await storage.open();
@@ -375,6 +399,7 @@ class _HomeState extends State<Home> {
   List<Habit> get visible => habits
       .where(
         (h) =>
+            h.inMonth(month) &&
             (category == 'All habits' || h.category == category) &&
             h.name.toLowerCase().contains(query.toLowerCase()),
       )
@@ -384,7 +409,10 @@ class _HomeState extends State<Home> {
   int get completed =>
       habits.fold(0, (n, h) => n + h.completions(month, elapsedEnd));
   double get rate => total == 0 ? 0 : completed / total;
-  int get bestStreak => habits.fold(0, (n, h) => math.max(n, h.streak(now)));
+  List<Habit> get monthlyHabits =>
+      habits.where((h) => h.inMonth(month)).toList();
+  int get bestStreak =>
+      monthlyHabits.fold(0, (n, h) => math.max(n, h.streak(now)));
   Future<void> persist(VoidCallback mutation) async {
     if (busy || loadError != null) return;
     final backup = habits.map((h) => Habit.fromJson(h.toJson())).toList();
@@ -414,12 +442,46 @@ class _HomeState extends State<Home> {
     if (busy) return;
     final target = DateTime(selected.year, selected.month);
     if (!monthTabs.contains(target)) {
+      final earlier = monthTabs.where((m) => m.isBefore(target)).toList()
+        ..sort();
+      final source = earlier.isEmpty ? month : earlier.last;
+      final copy = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('Set up ${months[target.month - 1]} ${target.year}'),
+          content: Text(
+            'Use the habits from ${months[source.month - 1]} ${source.year}, or start this month with a clean list? Other months keep their habits and check-ins.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel'),
+            ),
+            OutlinedButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text('Start fresh'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text('Use same habits'),
+            ),
+          ],
+        ),
+      );
+      if (copy == null || !mounted) return;
       final updated = [...monthTabs, target]..sort();
+      final previous = habits.map((h) => Habit.fromJson(h.toJson())).toList();
+      for (final h in habits) {
+        final include = copy && h.inMonth(source);
+        h.months ??= monthTabs.map(monthKey).toSet();
+        if (include) h.months!.add(monthKey(target));
+      }
       try {
-        await storage.saveMonths(updated);
+        await storage.savePlan(habits, updated);
         if (!mounted) return;
         setState(() => monthTabs = updated);
       } catch (e) {
+        habits = previous;
         message('Could not save the new month. Please try again.');
         return;
       }
@@ -440,10 +502,60 @@ class _HomeState extends State<Home> {
     if (chosen != null) await selectMonth(chosen);
   }
 
+  Future<void> deleteMonth(DateTime target) async {
+    if (busy || !target.isAfter(DateTime(now.year, now.month))) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete ${months[target.month - 1]} ${target.year}?'),
+        content: Text(
+          'Remove this future month and its habit assignments? Other months and their history will stay intact.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('Delete month'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final backup = habits.map((h) => Habit.fromJson(h.toJson())).toList(),
+        tabs = monthTabs.where((m) => m != target).toList();
+    setState(() => busy = true);
+    try {
+      for (final h in habits) {
+        h.months ??= monthTabs.map(monthKey).toSet();
+        h.months!.remove(monthKey(target));
+      }
+      await storage.savePlan(habits, tabs);
+      if (mounted) {
+        setState(() {
+          monthTabs = tabs;
+          if (month == target) month = tabs.last;
+        });
+      }
+    } catch (_) {
+      habits = backup;
+      if (mounted) message('Could not delete the month. Your data was kept.');
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> editHabit([Habit? existing]) async {
     final result = await showDialog<Habit>(
       context: context,
-      builder: (_) => HabitDialog(existing: existing, now: now),
+      builder: (_) => HabitDialog(
+        existing: existing,
+        now: now,
+        month: month,
+        monthTabs: monthTabs,
+      ),
     );
     if (result != null) {
       await persist(() {
@@ -743,7 +855,7 @@ class _HomeState extends State<Home> {
               SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Personal habits',
+                  activeProfile['alias'] as String,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: muted),
@@ -870,16 +982,22 @@ class _HomeState extends State<Home> {
             children: [
               Icon(icon, size: 19, color: page == index ? purple : muted),
               SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: page == index ? FontWeight.w600 : FontWeight.w400,
-                  color: page == index ? purple : muted,
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: page == index
+                        ? FontWeight.w600
+                        : FontWeight.w400,
+                    color: page == index ? purple : muted,
+                  ),
                 ),
               ),
               if (page == index) ...[
-                Spacer(),
+                SizedBox(width: 6),
                 Container(
                   width: 5,
                   height: 5,
@@ -902,218 +1020,238 @@ class _HomeState extends State<Home> {
       color: colors.surface,
       border: Border(bottom: BorderSide(color: line)),
     ),
-    child: Row(
-      children: [
-        if (!desktop) ...[brand(), SizedBox(width: 10)],
-        if (isWindowsDesktop)
-          trackerSelector()
-        else
-          Text(
-            desktop ? 'Workspace' : 'TrackVerse',
-            style: TextStyle(color: muted, fontSize: 12),
-          ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 13),
-          child: Text('/', style: TextStyle(color: muted)),
-        ),
-        Text(
-          ['Overview', 'Insights', 'Settings'][page],
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        ),
-        Spacer(),
-        if (desktop)
-          Text(
-            'Make room for better habits.',
-            style: TextStyle(color: muted, fontSize: 11),
-          ),
-        SizedBox(width: 20),
-        IconButton(
-          tooltip: colors.dark ? 'Switch to light mode' : 'Switch to dark mode',
-          onPressed: () =>
-              changeAppearance(colors.dark ? ThemeMode.light : ThemeMode.dark),
-          icon: Icon(
-            colors.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-            size: 19,
-            color: muted,
-          ),
-        ),
-        SizedBox(width: 10),
-        Tooltip(
-          message: (kIsWeb && !isWindowsDesktop)
-              ? 'Browser preview · browser storage'
-              : 'Private by design · saved in SQLite on this device',
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              border: Border.all(color: line),
-              borderRadius: BorderRadius.circular(7),
+    child: CustomPaint(
+      painter: NavCurvePainter(consistencyValues, colors.accent),
+      child: Row(
+        children: [
+          if (!desktop) ...[brand(), SizedBox(width: 10)],
+          if (desktop && isWindowsDesktop)
+            trackerSelector()
+          else
+            Text(
+              desktop ? 'Workspace' : 'TrackVerse',
+              style: TextStyle(color: muted, fontSize: 12),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.shield_outlined, size: 14, color: Color(0xFF69A28D)),
-                if (desktop) ...[
-                  SizedBox(width: 7),
-                  Text(
-                    (kIsWeb && !isWindowsDesktop)
-                        ? 'Browser preview'
-                        : 'Local & private',
-                    style: TextStyle(fontSize: 10, color: muted),
+          if (desktop)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 13),
+              child: Text('/', style: TextStyle(color: muted)),
+            ),
+          if (desktop)
+            Text(
+              ['Overview', 'Insights', 'Settings'][page],
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+          Spacer(),
+          if (desktop)
+            Text(
+              'Make room for better habits.',
+              style: TextStyle(color: muted, fontSize: 11),
+            ),
+          SizedBox(width: 20),
+          IconButton(
+            tooltip: colors.dark
+                ? 'Switch to light mode'
+                : 'Switch to dark mode',
+            onPressed: () => changeAppearance(
+              colors.dark ? ThemeMode.light : ThemeMode.dark,
+            ),
+            icon: Icon(
+              colors.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+              size: 19,
+              color: muted,
+            ),
+          ),
+          SizedBox(width: 10),
+          Tooltip(
+            message: (kIsWeb && !isWindowsDesktop)
+                ? 'Browser preview · browser storage'
+                : 'Private by design · saved in SQLite on this device',
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                border: Border.all(color: line),
+                borderRadius: BorderRadius.circular(7),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    size: 14,
+                    color: Color(0xFF69A28D),
                   ),
+                  if (desktop) ...[
+                    SizedBox(width: 7),
+                    Text(
+                      (kIsWeb && !isWindowsDesktop)
+                          ? 'Browser preview'
+                          : 'Local & private',
+                      style: TextStyle(fontSize: 10, color: muted),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
   Widget content(bool desktop) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
+            child: Text(
+              page == 1
+                  ? 'Your progress, in perspective.'
+                  : 'Your daily rituals.',
+              style: TextStyle(
+                fontSize: desktop ? 22 : 18,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -.5,
+              ),
+            ),
+          ),
+          if (desktop) monthPicker(),
+        ],
+      ),
+      SizedBox(height: 16),
+      LayoutBuilder(
+        builder: (context, c) {
+          final quote = Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: colors.raised,
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: line),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(Icons.format_quote_rounded, color: purple, size: 20),
+                SizedBox(height: 6),
                 Text(
-                  'A LITTLE BETTER, EVERY DAY',
+                  'Great things are done by a series of small things.',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    height: 1.45,
+                    letterSpacing: -.5,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'ONE DAY. ONE HABIT. ONE STEP FORWARD.',
                   style: TextStyle(
                     fontSize: 9,
-                    color: purple,
-                    letterSpacing: 1.8,
-                    fontWeight: FontWeight.w700,
+                    color: muted,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                SizedBox(height: 9),
+                SizedBox(height: 6),
                 Text(
-                  page == 1
-                      ? 'Your progress, in perspective.'
-                      : 'Consistency looks good on you.',
-                  style: TextStyle(
-                    fontSize: desktop ? 29 : 23,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -1.1,
-                    height: 1.25,
-                  ),
-                ),
-                SizedBox(height: 9),
-                Text(
-                  'Small actions add up. Here’s how your journey is taking shape.',
-                  style: TextStyle(color: muted, fontSize: 12),
+                  'Your pace is your own. Keep showing up.',
+                  style: TextStyle(fontSize: 10, color: muted),
                 ),
               ],
             ),
-          ),
-          if (desktop) addButton(),
-        ],
+          );
+          return c.maxWidth > 800
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 9, child: quote),
+                    SizedBox(width: 12),
+                    Expanded(flex: 11, child: kpiGrid()),
+                  ],
+                )
+              : Column(children: [quote, SizedBox(height: 16), kpiGrid()]);
+        },
       ),
-      SizedBox(height: 25),
+      SizedBox(height: 14),
       monthTabBar(),
-      SizedBox(height: 20),
-      Row(
-        children: [
-          monthPicker(),
-          Spacer(),
-          if (!desktop)
-            addButton()
-          else
-            Text(
-              '${habits.length} habits  ·  Your own pace',
-              style: TextStyle(color: muted, fontSize: 11),
-            ),
-        ],
-      ),
-      SizedBox(height: 21),
-      LayoutBuilder(
-        builder: (context, c) => Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            stat(
-              'Completion rate',
-              '${(rate * 100).round()}%',
-              'Of scheduled check-ins so far',
-              Icons.donut_large,
-              0,
-              c.maxWidth,
-            ),
-            stat(
-              'Total check-ins',
-              '$completed',
-              'Moments you showed up',
-              Icons.check_circle_outline,
-              1,
-              c.maxWidth,
-            ),
-            stat(
-              'Best current streak',
-              '$bestStreak ${bestStreak == 1 ? 'day' : 'days'}',
-              'Across your active habits',
-              Icons.local_fire_department_outlined,
-              2,
-              c.maxWidth,
-            ),
-            stat(
-              'Active habits',
-              '${habits.length}',
-              'Intentions turned into action',
-              Icons.layers_outlined,
-              3,
-              c.maxWidth,
-            ),
-          ],
-        ),
-      ),
-      SizedBox(height: 26),
+      SizedBox(height: 16),
       if (page == 0) ...[
         habitGrid(),
         SizedBox(height: 20),
         weeklySummary(),
-        SizedBox(height: 24),
+        SizedBox(height: 20),
       ],
+
+      SizedBox(height: 20),
       LayoutBuilder(
-        builder: (context, c) {
-          final wide = c.maxWidth > 760;
-          final chart = progressChart();
-          final breakdown = progressBreakdown();
-          return wide
-              ? IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(flex: 16, child: chart),
-                      SizedBox(width: 22),
-                      Expanded(flex: 10, child: breakdown),
-                    ],
-                  ),
-                )
-              : Column(children: [chart, SizedBox(height: 18), breakdown]);
-        },
+        builder: (context, c) => c.maxWidth > 800
+            ? IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(flex: 16, child: progressChart()),
+                    SizedBox(width: 20),
+                    Expanded(flex: 10, child: progressBreakdown()),
+                  ],
+                ),
+              )
+            : Column(
+                children: [
+                  progressChart(),
+                  SizedBox(height: 16),
+                  progressBreakdown(),
+                ],
+              ),
       ),
-      SizedBox(height: 23),
-      Row(
-        children: [
-          Icon(Icons.lock_outline, size: 12, color: muted),
-          SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              (kIsWeb && !isWindowsDesktop)
-                  ? 'Browser preview · Native builds store everything in SQLite on your device.'
-                  : 'Your habits, your device. Everything is saved locally in SQLite.',
-              style: TextStyle(fontSize: 10, color: muted),
-            ),
-          ),
-          if (desktop)
-            Text(
-              'Progress over perfection.',
-              style: TextStyle(fontSize: 10, color: muted),
-            ),
-        ],
+
+      SizedBox(height: 18),
+      Text(
+        'Your habits, your pace. Saved locally in SQLite.',
+        style: TextStyle(fontSize: 10, color: muted),
       ),
-      SizedBox(height: 10),
     ],
+  );
+  Widget kpiGrid() => LayoutBuilder(
+    builder: (context, c) => Wrap(
+      spacing: 16,
+      runSpacing: 16,
+      children: [
+        stat(
+          'Completion rate',
+          '${(rate * 100).round()}%',
+          'Of scheduled check-ins so far',
+          Icons.donut_large,
+          0,
+          c.maxWidth,
+        ),
+        stat(
+          'Total check-ins',
+          completed.toString(),
+          'Moments you showed up',
+          Icons.check_circle_outline,
+          1,
+          c.maxWidth,
+        ),
+        stat(
+          'Best current streak',
+          bestStreak.toString() + (bestStreak == 1 ? ' day' : ' days'),
+          'Across this month’s habits',
+          Icons.local_fire_department_outlined,
+          2,
+          c.maxWidth,
+        ),
+        stat(
+          'Active habits',
+          monthlyHabits.length.toString(),
+          'In this month',
+          Icons.layers_outlined,
+          3,
+          c.maxWidth,
+        ),
+      ],
+    ),
   );
   Widget addButton() => FilledButton.icon(
     onPressed: busy ? null : () => editHabit(),
@@ -1174,6 +1312,18 @@ class _HomeState extends State<Home> {
                               color: selected ? purple : muted,
                             ),
                           ),
+                          if (m.isAfter(DateTime(now.year, now.month)))
+                            IconButton(
+                              tooltip:
+                                  'Delete ${months[m.month - 1]} ${m.year}',
+                              constraints: BoxConstraints(
+                                minWidth: 28,
+                                minHeight: 28,
+                              ),
+                              padding: EdgeInsets.zero,
+                              onPressed: busy ? null : () => deleteMonth(m),
+                              icon: Icon(Icons.close, size: 14, color: muted),
+                            ),
                         ],
                       ),
                     ),
@@ -1239,15 +1389,18 @@ class _HomeState extends State<Home> {
                       ),
                     ),
                     SizedBox(width: 7),
-                    Text(
-                      'WEEK ${i + 1}',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: .8,
+                    Expanded(
+                      child: Text(
+                        'WEEK ${i + 1}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: .8,
+                        ),
                       ),
                     ),
-                    Spacer(),
                     Text(
                       '${start.day}–${finish.day}',
                       style: TextStyle(fontSize: 9, color: muted),
@@ -1334,8 +1487,8 @@ class _HomeState extends State<Home> {
   ) {
     final col = habitColors[color];
     return Container(
-      width: width > 850 ? (width - 48) / 4 : (width - 16) / 2,
-      padding: EdgeInsets.all(20),
+      width: width < 360 ? width : (width - 16) / 2,
+      padding: EdgeInsets.all(10),
       decoration: box(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1343,25 +1496,22 @@ class _HomeState extends State<Home> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(color: muted, fontSize: 11),
+                child: Text(label, style: TextStyle(color: muted, fontSize: 9)),
+              ),
+              Icon(icon, color: col, size: 13),
+              SizedBox(width: 10),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -.5,
                 ),
               ),
-              Icon(icon, color: col, size: 17),
             ],
           ),
-          SizedBox(height: 15),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 29,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -1,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(sub, style: TextStyle(color: muted, fontSize: 10)),
+          SizedBox(height: 4),
+          Text(sub, style: TextStyle(color: muted, fontSize: 9)),
         ],
       ),
     );
@@ -1372,6 +1522,66 @@ class _HomeState extends State<Home> {
     borderRadius: BorderRadius.circular(13),
     border: Border.all(color: line),
   );
+  Widget habitControls() => LayoutBuilder(
+    builder: (context, c) => SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: math.max(c.maxWidth, 540 + appearance.fontStep.clamp(0, 4) * 45),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 200,
+              height: 40,
+              child: TextField(
+                controller: searchController,
+                onChanged: (v) => setState(() => query = v),
+                style: TextStyle(fontSize: 11),
+                decoration: InputDecoration(
+                  hintText: 'Find a habit…',
+                  prefixIcon: Icon(Icons.search, size: 16),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 10),
+            PopupMenuButton<String>(
+              tooltip: 'Filter by category',
+              initialValue: category,
+              onSelected: (v) => setState(() => category = v),
+              itemBuilder: (_) => [
+                'All habits',
+                ...monthlyHabits.map((h) => h.category).toSet(),
+              ].map((s) => PopupMenuItem(value: s, child: Text(s))).toList(),
+              child: Container(
+                height: 40,
+                padding: EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: line),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.filter_list, size: 15, color: muted),
+                    SizedBox(width: 7),
+                    Text(category, style: TextStyle(fontSize: 11)),
+                    SizedBox(width: 7),
+                    Icon(Icons.expand_more, size: 15, color: muted),
+                  ],
+                ),
+              ),
+            ),
+            Spacer(),
+            SizedBox(width: 12),
+            addButton(),
+          ],
+        ),
+      ),
+    ),
+  );
   Widget habitGrid() => Container(
     decoration: box(),
     clipBehavior: Clip.antiAlias,
@@ -1379,15 +1589,13 @@ class _HomeState extends State<Home> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.fromLTRB(23, 20, 17, 17),
-          child: Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 25,
-            runSpacing: 12,
+          padding: EdgeInsets.fromLTRB(23, 18, 17, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                runSpacing: 8,
                 children: [
                   Text(
                     'Habit tracker',
@@ -1397,65 +1605,12 @@ class _HomeState extends State<Home> {
                   pill('${visible.length} habits'),
                 ],
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 155,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: line),
-                      borderRadius: BorderRadius.circular(7),
-                    ),
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: (v) => setState(() => query = v),
-                      style: TextStyle(fontSize: 11),
-                      decoration: InputDecoration(
-                        hintText: 'Find a habit…',
-                        prefixIcon: Icon(Icons.search, size: 15),
-                        prefixIconConstraints: BoxConstraints(minWidth: 30),
-                        contentPadding: EdgeInsets.zero,
-                        filled: false,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  PopupMenuButton<String>(
-                    tooltip: 'Filter by category',
-                    initialValue: category,
-                    onSelected: (v) => setState(() => category = v),
-                    itemBuilder: (_) =>
-                        ['All habits', ...habits.map((h) => h.category).toSet()]
-                            .map((s) => PopupMenuItem(value: s, child: Text(s)))
-                            .toList(),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: line),
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.filter_list, size: 14, color: muted),
-                          SizedBox(width: 7),
-                          Text(category, style: TextStyle(fontSize: 10)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+              SizedBox(height: 12),
+              habitControls(),
             ],
           ),
         ),
-        if (habits.isEmpty)
+        if (monthlyHabits.isEmpty)
           emptyState()
         else if (visible.isEmpty)
           Padding(
@@ -1479,9 +1634,11 @@ class _HomeState extends State<Home> {
                 children: [
                   Icon(Icons.touch_app_outlined, size: 13, color: muted),
                   SizedBox(width: 6),
-                  Text(
-                    'Only today is editable. Past days are locked.',
-                    style: TextStyle(color: muted, fontSize: 10),
+                  Flexible(
+                    child: Text(
+                      'Only today is editable. Past days are locked.',
+                      style: TextStyle(color: muted, fontSize: 10),
+                    ),
                   ),
                 ],
               ),
@@ -1520,7 +1677,9 @@ class _HomeState extends State<Home> {
         ),
       ),
       SizedBox(width: 6),
-      Text(label, style: TextStyle(color: muted, fontSize: 10)),
+      Flexible(
+        child: Text(label, style: TextStyle(color: muted, fontSize: 10)),
+      ),
     ],
   );
   Widget emptyState() => Padding(
@@ -1547,24 +1706,6 @@ class _HomeState extends State<Home> {
             textAlign: TextAlign.center,
             style: TextStyle(color: muted, fontSize: 12),
           ),
-          SizedBox(height: 20),
-          Wrap(
-            spacing: 12,
-            runSpacing: 10,
-            alignment: WrapAlignment.center,
-            children: [
-              addButton(),
-              OutlinedButton(
-                onPressed: busy
-                    ? null
-                    : () => persist(() => habits = demoHabits(now)),
-                child: Text(
-                  'Explore with sample habits',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     ),
@@ -1578,14 +1719,15 @@ class _HomeState extends State<Home> {
     onManage: (h, s) => s == 'edit' ? editHabit(h) : deleteHabit(h),
   );
 
+  List<double?> get consistencyValues => List.generate(end.day, (i) {
+    final d = DateTime(month.year, month.month, i + 1);
+    final scheduled = habits.where((h) => h.scheduled(d)).length;
+    return d.isAfter(now) || scheduled == 0
+        ? null
+        : habits.where((h) => h.scheduled(d) && h.done(d)).length / scheduled;
+  });
   Widget progressChart() {
-    final values = List.generate(end.day, (i) {
-      final d = DateTime(month.year, month.month, i + 1);
-      final scheduled = habits.where((h) => h.scheduled(d)).length;
-      return d.isAfter(now) || scheduled == 0
-          ? null
-          : habits.where((h) => h.scheduled(d) && h.done(d)).length / scheduled;
-    });
+    final values = consistencyValues;
     return Container(
       padding: EdgeInsets.all(23),
       decoration: box(),
@@ -1612,7 +1754,12 @@ class _HomeState extends State<Home> {
           SizedBox(
             height: 170,
             child: CustomPaint(
-              painter: ProgressPainter(values, dark: colors.dark),
+              painter: ProgressPainter(
+                values,
+                dark: colors.dark,
+                fontSize: MediaQuery.textScalerOf(context).scale(8),
+                fontFamily: appearance.fontFamily,
+              ),
               size: Size.infinite,
             ),
           ),
@@ -1715,24 +1862,6 @@ class _HomeState extends State<Home> {
               ),
             ],
           ),
-          SizedBox(height: 22),
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              color: colors.raised,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Text(
-              '“Great things are done by a series of small things.”',
-              style: TextStyle(
-                color: muted,
-                fontSize: 10,
-                fontStyle: FontStyle.italic,
-                height: 1.5,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -1796,6 +1925,77 @@ class _HomeState extends State<Home> {
               ],
               selected: {appearance.mode},
               onSelectionChanged: (values) => changeAppearance(values.first),
+            ),
+            SizedBox(height: 24),
+            Text('Typography', style: TextStyle(fontWeight: FontWeight.w600)),
+            SizedBox(height: 12),
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: 220,
+                  child: DropdownButtonFormField<String>(
+                    isExpanded: true,
+                    initialValue: appearance.fontFamily,
+                    decoration: InputDecoration(labelText: 'Font style'),
+                    items: Appearance.fonts
+                        .map(
+                          (f) => DropdownMenuItem(
+                            value: f,
+                            child: Text(f, style: TextStyle(fontFamily: f)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (f) async {
+                      try {
+                        await appearance.setTypography(family: f);
+                      } catch (_) {
+                        if (mounted) message('Could not save font preference.');
+                      }
+                    },
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Decrease font size by 1',
+                      onPressed: appearance.fontStep > -2
+                          ? () => changeFontSize(-1)
+                          : null,
+                      icon: Icon(Icons.text_decrease),
+                    ),
+                    Text(
+                      '${appearance.fontStep >= 0 ? '+' : ''}${appearance.fontStep}',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    IconButton(
+                      tooltip: 'Increase font size by 1',
+                      onPressed: appearance.fontStep < 4
+                          ? () => changeFontSize(1)
+                          : null,
+                      icon: Icon(Icons.text_increase),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () async {
+                    try {
+                      await appearance.setTypography(step: 0, family: 'Inter');
+                    } catch (_) {
+                      if (mounted) message('Could not reset typography.');
+                    }
+                  },
+                  child: Text('Reset fonts'),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Applies throughout the app. Fonts are bundled and work offline.',
+              style: TextStyle(color: muted, fontSize: 11),
             ),
             SizedBox(height: 24),
             Divider(),
@@ -1956,12 +2156,21 @@ class _MonthDialogState extends State<MonthDialog> {
 class HabitDialog extends StatefulWidget {
   final Habit? existing;
   final DateTime now;
-  const HabitDialog({super.key, this.existing, required this.now});
+  final DateTime? month;
+  final List<DateTime> monthTabs;
+  const HabitDialog({
+    super.key,
+    this.existing,
+    required this.now,
+    this.month,
+    this.monthTabs = const [],
+  });
   @override
   State<HabitDialog> createState() => _HabitDialogState();
 }
 
 class _HabitDialogState extends State<HabitDialog> {
+  bool allMonths = false;
   final form = GlobalKey<FormState>();
   late final TextEditingController name = TextEditingController(
     text: widget.existing?.name,
@@ -2016,22 +2225,39 @@ class _HabitDialogState extends State<HabitDialog> {
               ),
               const SizedBox(height: 13),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: category,
                 decoration: const InputDecoration(labelText: 'Category'),
-                items:
-                    [
-                          'Wellness',
-                          'Learning',
-                          'Mindfulness',
-                          'Fitness',
-                          'Creativity',
-                          'Personal',
-                        ]
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
+                items: {...habitCategories, category}
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .toList(),
                 onChanged: (v) => setState(() => category = v!),
               ),
               const SizedBox(height: 22),
+              if (widget.existing == null) ...[
+                Text(
+                  'Add to',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      label: Text('This month only'),
+                      selected: !allMonths,
+                      onSelected: (_) => setState(() => allMonths = false),
+                    ),
+                    ChoiceChip(
+                      label: Text('All months'),
+                      selected: allMonths,
+                      onSelected: (_) => setState(() => allMonths = true),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+              ],
               const Text(
                 'Repeat on',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
@@ -2066,7 +2292,8 @@ class _HabitDialogState extends State<HabitDialog> {
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                runSpacing: 10,
                 children: List.generate(
                   habitColors.length,
                   (i) => Padding(
@@ -2099,7 +2326,7 @@ class _HabitDialogState extends State<HabitDialog> {
                 children: List.generate(
                   habitIcons.length,
                   (i) => IconButton(
-                    tooltip: 'Habit icon ${i + 1}',
+                    tooltip: habitIconNames[i],
                     onPressed: () => setState(() => icon = i),
                     style: IconButton.styleFrom(
                       backgroundColor: icon == i
@@ -2141,6 +2368,11 @@ class _HabitDialogState extends State<HabitDialog> {
                 created: widget.existing?.created ?? widget.now,
                 weekdays: weekdays,
                 checks: widget.existing?.checks,
+                months: widget.existing != null
+                    ? widget.existing!.months
+                    : (allMonths
+                          ? widget.monthTabs.map(monthKey).toSet()
+                          : {monthKey(widget.month ?? widget.now)}),
               ),
             );
           }
@@ -2151,13 +2383,79 @@ class _HabitDialogState extends State<HabitDialog> {
   );
 }
 
+class NavCurvePainter extends CustomPainter {
+  final List<double?> values;
+  final Color color;
+  NavCurvePainter(this.values, this.color);
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+    final points = <Offset>[];
+    for (var i = 0; i < values.length; i++) {
+      if (values[i] != null) {
+        points.add(
+          Offset(
+            size.width * i / (values.length - 1),
+            size.height * (.84 - values[i]! * .65),
+          ),
+        );
+      }
+    }
+    if (points.isEmpty) return;
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (var i = 1; i < points.length; i++) {
+      final a = points[i - 1], b = points[i], mid = (a.dx + b.dx) / 2;
+      path.cubicTo(mid, a.dy, mid, b.dy, b.dx, b.dy);
+    }
+    final fill = Path.from(path)
+      ..lineTo(points.last.dx, size.height)
+      ..lineTo(points.first.dx, size.height)
+      ..close();
+    canvas.drawPath(
+      fill,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: .09), color.withValues(alpha: .015)],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color.withValues(alpha: .16)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5,
+    );
+    if (points.length == 1) {
+      canvas.drawCircle(
+        points.first,
+        2,
+        Paint()..color = color.withValues(alpha: .2),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant NavCurvePainter oldDelegate) => true;
+}
+
 class ProgressPainter extends CustomPainter {
   final List<double?> values;
   final bool dark;
-  ProgressPainter(this.values, {this.dark = false});
+  final double fontSize;
+  final String fontFamily;
+  ProgressPainter(
+    this.values, {
+    this.dark = false,
+    this.fontSize = 8,
+    this.fontFamily = 'Inter',
+  });
   @override
   void paint(Canvas canvas, Size size) {
-    final left = 30.0, width = size.width - left, height = size.height - 10;
+    final left = math.max(30.0, fontSize * 4),
+        width = size.width - left,
+        height = size.height - 10;
     final grid = Paint()
       ..color = dark ? const Color(0xFF32423B) : line
       ..strokeWidth = 1;
@@ -2167,7 +2465,11 @@ class ProgressPainter extends CustomPainter {
       final t = TextPainter(
         text: TextSpan(
           text: '${100 - i * 25}%',
-          style: const TextStyle(fontSize: 8, color: muted),
+          style: TextStyle(
+            fontSize: fontSize,
+            color: muted,
+            fontFamily: fontFamily,
+          ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();

@@ -27,11 +27,14 @@ class HabitStorage {
     await directory.create(recursive: true);
     _db = await openDatabase(
       databasePath ?? p.join(directory.path, 'trackverse.sqlite3'),
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 3) {
+          await db.execute('ALTER TABLE habits ADD COLUMN months TEXT');
+        }
         if (oldVersion < 2) {
           await db.execute('CREATE TABLE months (month TEXT PRIMARY KEY)');
         }
@@ -39,7 +42,7 @@ class HabitStorage {
       onCreate: (db, version) async {
         await db.execute('CREATE TABLE months (month TEXT PRIMARY KEY)');
         await db.execute(
-          'CREATE TABLE habits (id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, color INTEGER NOT NULL, icon INTEGER NOT NULL, created TEXT NOT NULL, weekdays TEXT NOT NULL)',
+          'CREATE TABLE habits (id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, color INTEGER NOT NULL, icon INTEGER NOT NULL, created TEXT NOT NULL, weekdays TEXT NOT NULL, months TEXT)',
         );
         await db.execute(
           'CREATE TABLE completions (habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE, day TEXT NOT NULL, PRIMARY KEY(habit_id, day))',
@@ -69,6 +72,9 @@ class HabitStorage {
           (r) => Habit.fromJson({
             ...r,
             'weekdays': jsonDecode(r['weekdays'] as String),
+            'months': r['months'] == null
+                ? null
+                : jsonDecode(r['months'] as String),
             'checks': checks
                 .where((c) => c['habit_id'] == r['id'])
                 .map((c) => c['day'])
@@ -86,6 +92,9 @@ class HabitStorage {
       for (final h in habits) {
         final row = h.toJson()..remove('checks');
         row['weekdays'] = jsonEncode(row['weekdays']);
+        row['months'] = row['months'] == null
+            ? null
+            : jsonEncode(row['months']);
         batch.insert('habits', row);
         for (final day in h.checks) {
           batch.insert('completions', {'habit_id': h.id, 'day': day});
@@ -96,4 +105,31 @@ class HabitStorage {
   }
 
   Future<void> close() => _db.close();
+  Future<void> savePlan(List<Habit> habits, List<DateTime> months) async {
+    final current = DateTime(DateTime.now().year, DateTime.now().month);
+    if ((await loadMonths()).any(
+      (m) => !months.contains(m) && !m.isAfter(current),
+    )) {
+      throw StateError('Current and past months cannot be deleted.');
+    }
+    await _db.transaction((tx) async {
+      await tx.delete('completions');
+      await tx.delete('habits');
+      await tx.delete('months');
+      for (final m in months) {
+        await tx.insert('months', {'month': dayKey(m)});
+      }
+      for (final h in habits) {
+        final row = h.toJson()..remove('checks');
+        row['weekdays'] = jsonEncode(row['weekdays']);
+        row['months'] = row['months'] == null
+            ? null
+            : jsonEncode(row['months']);
+        await tx.insert('habits', row);
+        for (final day in h.checks) {
+          await tx.insert('completions', {'habit_id': h.id, 'day': day});
+        }
+      }
+    });
+  }
 }

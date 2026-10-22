@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 
 String dayKey(DateTime date) =>
@@ -10,6 +9,17 @@ const habitColors = [
   Color(0xFFE0A54F),
   Color(0xFF6A9ACC),
   Color(0xFFD27D92),
+  Color(0xFF4285C5),
+  Color(0xFF00897B),
+  Color(0xFF8E5DA8),
+  Color(0xFFDB704C),
+  Color(0xFF607D8B),
+  Color(0xFFAD8056),
+  Color(0xFFB25873),
+  Color(0xFF6F9348),
+  Color(0xFF5365A5),
+  Color(0xFFB09633),
+  Color(0xFF5B676D),
 ];
 const habitIcons = [
   Icons.auto_stories_outlined,
@@ -20,7 +30,73 @@ const habitIcons = [
   Icons.edit_outlined,
   Icons.code,
   Icons.favorite_border,
+  Icons.calculate_outlined,
+  Icons.translate,
+  Icons.music_note_outlined,
+  Icons.movie_outlined,
+  Icons.sports_esports_outlined,
+  Icons.restaurant_outlined,
+  Icons.candlestick_chart_outlined,
+  Icons.nights_stay_outlined,
+  Icons.fitness_center,
+  Icons.shower_outlined,
+  Icons.brush_outlined,
+  Icons.piano_outlined,
+  Icons.science_outlined,
+  Icons.pets_outlined,
+  Icons.cleaning_services_outlined,
+  Icons.directions_bike,
+  Icons.savings_outlined,
+  Icons.work_outline,
 ];
+const habitIconNames = [
+  'Reading',
+  'Water',
+  'Mindfulness',
+  'Running',
+  'Bedtime',
+  'Writing',
+  'Coding',
+  'Wellness',
+  'Maths',
+  'Languages',
+  'Music',
+  'Entertainment',
+  'Gaming',
+  'Cooking',
+  'Trading',
+  'Sleep',
+  'Gym',
+  'Hygiene',
+  'Art',
+  'Piano',
+  'Science',
+  'Pets',
+  'Cleaning',
+  'Cycling',
+  'Savings',
+  'Work',
+];
+const habitCategories = [
+  'Wellness',
+  'Learning',
+  'Mindfulness',
+  'Fitness',
+  'Creativity',
+  'Personal',
+  'Entertainment',
+  'Gaming',
+  'Hygiene',
+  'Cooking',
+  'Finance',
+  'Languages',
+  'Music',
+  'Sleep',
+  'Work',
+  'Relationships',
+];
+String monthKey(DateTime date) =>
+    '${date.year}-${date.month.toString().padLeft(2, '0')}-01';
 
 class Habit {
   final String id;
@@ -31,6 +107,7 @@ class Habit {
   final DateTime created;
   final Set<int> weekdays;
   final Set<String> checks;
+  Set<String>? months;
   Habit({
     required this.id,
     required this.name,
@@ -40,9 +117,13 @@ class Habit {
     required this.created,
     Set<int>? weekdays,
     Set<String>? checks,
+    this.months,
   }) : weekdays = weekdays ?? {1, 2, 3, 4, 5, 6, 7},
        checks = checks ?? {};
+  bool inMonth(DateTime date) =>
+      months == null || months!.contains(monthKey(date));
   bool scheduled(DateTime date) =>
+      inMonth(date) &&
       !dayOnly(date).isBefore(dayOnly(created)) &&
       weekdays.contains(date.weekday);
   bool done(DateTime date) => checks.contains(dayKey(date));
@@ -95,6 +176,7 @@ class Habit {
     'created': dayKey(created),
     'weekdays': weekdays.toList(),
     'checks': checks.toList(),
+    'months': months?.toList(),
   };
   factory Habit.fromJson(Map<String, dynamic> j) => Habit(
     id: j['id'] as String,
@@ -105,44 +187,6 @@ class Habit {
     created: DateTime.parse(j['created'] as String),
     weekdays: (j['weekdays'] as List).cast<int>().toSet(),
     checks: (j['checks'] as List).cast<String>().toSet(),
+    months: (j['months'] as List?)?.cast<String>().toSet(),
   );
-}
-
-List<Habit> demoHabits(DateTime now) {
-  final random = Random(42);
-  final names = [
-    'Read 20 pages',
-    'Drink enough water',
-    'Mindful mornings',
-    'Move your body',
-    'Sleep before 11',
-    'Daily journaling',
-  ];
-  final categories = [
-    'Learning',
-    'Wellness',
-    'Mindfulness',
-    'Fitness',
-    'Wellness',
-    'Mindfulness',
-  ];
-  return List.generate(names.length, (i) {
-    final h = Habit(
-      id: 'demo-$i',
-      name: names[i],
-      category: categories[i],
-      color: i % 5,
-      icon: i,
-      created: DateTime(now.year, now.month, 1),
-    );
-    for (
-      var d = h.created;
-      d.isBefore(dayOnly(now));
-      d = DateTime(d.year, d.month, d.day + 1)
-    ) {
-      if (random.nextDouble() < .76) h.checks.add(dayKey(d));
-    }
-    if (i < 3) h.checks.add(dayKey(now));
-    return h;
-  });
 }
