@@ -12,9 +12,11 @@ import 'desktop_bridge.dart';
 import 'appearance.dart';
 import 'local_clock.dart';
 import 'cloud_ui.dart';
+import 'focus_insights.dart';
+import 'settings_page.dart';
 
 const ink = Color(0xFF252735);
-const muted = Color(0xFF92939F);
+const muted = Color(0xFF596270);
 const purple = Color(0xFF32816A);
 const line = Color(0xFFEEEFF3);
 const canvas = Color(0xFFF8F9FC);
@@ -868,6 +870,50 @@ class _HomeState extends State<Home> {
             ],
           ),
         ),
+        SizedBox(height: 26),
+        Padding(
+          padding: EdgeInsets.only(left: 28, bottom: 8),
+          child: Text(
+            'WIDGETS',
+            style: TextStyle(
+              color: muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.6,
+            ),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 14),
+          child: Material(
+            color: colors.surface,
+            child: ListTile(
+              dense: true,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              leading: Icon(Icons.timer_outlined, color: purple, size: 21),
+              title: Text('Pomodoro', style: TextStyle(fontSize: 13)),
+              subtitle: Text(
+                'Make time for a habit',
+                style: TextStyle(color: muted, fontSize: 10),
+              ),
+              onTap: () async {
+                try {
+                  if (isWindowsDesktop) {
+                    await desktopRequest('openPomodoro');
+                  } else {
+                    message(
+                      'The floating timer is available in the Windows app.',
+                    );
+                  }
+                } catch (_) {
+                  message('Could not open the focus timer.');
+                }
+              },
+            ),
+          ),
+        ),
         Spacer(),
         Padding(
           padding: EdgeInsets.all(18),
@@ -959,12 +1005,12 @@ class _HomeState extends State<Home> {
     width: 31,
     height: 31,
     decoration: BoxDecoration(
-      color: purple,
+      color: const Color(0xFF394047),
       borderRadius: BorderRadius.circular(9),
     ),
     child: Icon(
       Icons.stacked_line_chart_rounded,
-      color: Theme.of(context).colorScheme.onPrimary,
+      color: Colors.white,
       size: 23,
     ),
   );
@@ -1177,6 +1223,10 @@ class _HomeState extends State<Home> {
       SizedBox(height: 14),
       monthTabBar(),
       SizedBox(height: 16),
+      if (page == 1) ...[
+        FocusInsights(key: ValueKey(activeProfile['id']), month: month),
+        SizedBox(height: 20),
+      ],
       if (page == 0) ...[
         habitGrid(),
         SizedBox(height: 20),
@@ -1757,7 +1807,7 @@ class _HomeState extends State<Home> {
               painter: ProgressPainter(
                 values,
                 dark: colors.dark,
-                fontSize: MediaQuery.textScalerOf(context).scale(8),
+                fontSize: MediaQuery.textScalerOf(context).scale(10),
                 fontFamily: appearance.fontFamily,
               ),
               size: Size.infinite,
@@ -1867,207 +1917,25 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget settings() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Make yourself at home.',
-        style: TextStyle(
-          fontSize: 29,
-          fontWeight: FontWeight.w700,
-          letterSpacing: -1,
-        ),
-      ),
-      SizedBox(height: 8),
-      Text(
-        'Your space. Your habits. Your data.',
-        style: TextStyle(color: muted),
-      ),
-      SizedBox(height: 28),
-      if (isWindowsDesktop) ...[
-        CloudPanel(
-          state: cloud,
-          busy: cloudBusy,
-          action: cloudAction,
-          onCreate: createTracker,
-          onRename: renameTracker,
-        ),
-        SizedBox(height: 20),
-      ],
-      Container(
-        padding: EdgeInsets.all(24),
-        decoration: box(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Appearance',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Choose a comfortable space for your daily rituals.',
-              style: TextStyle(color: muted, fontSize: 12),
-            ),
-            SizedBox(height: 18),
-            SegmentedButton<ThemeMode>(
-              segments: [
-                ButtonSegment(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined),
-                  label: Text('Light'),
-                ),
-                ButtonSegment(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined),
-                  label: Text('Dark'),
-                ),
-              ],
-              selected: {appearance.mode},
-              onSelectionChanged: (values) => changeAppearance(values.first),
-            ),
-            SizedBox(height: 24),
-            Text('Typography', style: TextStyle(fontWeight: FontWeight.w600)),
-            SizedBox(height: 12),
-            Wrap(
-              spacing: 16,
-              runSpacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                SizedBox(
-                  width: 220,
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    initialValue: appearance.fontFamily,
-                    decoration: InputDecoration(labelText: 'Font style'),
-                    items: Appearance.fonts
-                        .map(
-                          (f) => DropdownMenuItem(
-                            value: f,
-                            child: Text(f, style: TextStyle(fontFamily: f)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (f) async {
-                      try {
-                        await appearance.setTypography(family: f);
-                      } catch (_) {
-                        if (mounted) message('Could not save font preference.');
-                      }
-                    },
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'Decrease font size by 1',
-                      onPressed: appearance.fontStep > -2
-                          ? () => changeFontSize(-1)
-                          : null,
-                      icon: Icon(Icons.text_decrease),
-                    ),
-                    Text(
-                      '${appearance.fontStep >= 0 ? '+' : ''}${appearance.fontStep}',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    IconButton(
-                      tooltip: 'Increase font size by 1',
-                      onPressed: appearance.fontStep < 4
-                          ? () => changeFontSize(1)
-                          : null,
-                      icon: Icon(Icons.text_increase),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () async {
-                    try {
-                      await appearance.setTypography(step: 0, family: 'Inter');
-                    } catch (_) {
-                      if (mounted) message('Could not reset typography.');
-                    }
-                  },
-                  child: Text('Reset fonts'),
-                ),
-              ],
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Applies throughout the app. Fonts are bundled and work offline.',
-              style: TextStyle(color: muted, fontSize: 11),
-            ),
-            SizedBox(height: 24),
-            Divider(),
-            SizedBox(height: 16),
-            Text(
-              'Local time & daily lock',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Your device sets the date. Only today can be marked or unmarked; past days stay locked. The app refreshes at midnight and when you return to it.',
-              style: TextStyle(color: muted, height: 1.7),
-            ),
-          ],
-        ),
-      ),
-      SizedBox(height: 20),
-      Container(
-        padding: EdgeInsets.all(25),
-        decoration: box(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Data & privacy',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 12),
-            Text(
-              (kIsWeb && !isWindowsDesktop)
-                  ? 'This browser preview uses browser storage. The Windows, Linux, and Android applications use a private SQLite database.'
-                  : 'TrackVerse stores your habits and check-ins in a private SQLite database in your application support directory. No account, cloud service, or internet connection is required.',
-              style: TextStyle(color: muted, height: 1.8),
-            ),
-            SizedBox(height: 22),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: [
-                FilledButton.icon(
-                  onPressed: exportData,
-                  icon: Icon(Icons.download_outlined, size: 17),
-                  label: Text('Export backup'),
-                ),
-                OutlinedButton.icon(
-                  onPressed: busy ? null : importData,
-                  icon: Icon(Icons.upload_outlined, size: 17),
-                  label: Text('Restore backup'),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
-            Divider(),
-            SizedBox(height: 15),
-            Text(
-              'How progress is calculated',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Completion rate = completed check-ins ÷ scheduled check-ins, from the start of the selected month through today. Future days and days before a habit was created are excluded. Streaks count consecutive scheduled days; an incomplete today does not break a streak until the day is over.',
-              style: TextStyle(color: muted, height: 1.8),
-            ),
-            SizedBox(height: 24),
-            Text(
-              'TrackVerse 1.0.0',
-              style: TextStyle(color: purple, fontSize: 11),
-            ),
-          ],
-        ),
-      ),
-    ],
+  Widget settings() => SettingsPage(
+    trackerName: activeProfile['alias'] as String,
+    connected: cloud['connected'] == true,
+    busy: busy,
+    browserOnly: kIsWeb && !isWindowsDesktop,
+    onMode: changeAppearance,
+    onFontStep: changeFontSize,
+    onExport: exportData,
+    onRestore: importData,
+    cloudPanel: isWindowsDesktop
+        ? CloudPanel(
+            state: cloud,
+            busy: cloudBusy,
+            action: cloudAction,
+            onCreate: createTracker,
+            onRename: renameTracker,
+            embedded: true,
+          )
+        : null,
   );
 }
 
@@ -2457,7 +2325,9 @@ class ProgressPainter extends CustomPainter {
         width = size.width - left,
         height = size.height - 10;
     final grid = Paint()
-      ..color = dark ? const Color(0xFF32423B) : line
+      ..color = appearance.preset.palette(
+        dark ? Brightness.dark : Brightness.light,
+      )['border']!
       ..strokeWidth = 1;
     for (var i = 0; i < 5; i++) {
       final y = height * i / 4;
@@ -2467,8 +2337,11 @@ class ProgressPainter extends CustomPainter {
           text: '${100 - i * 25}%',
           style: TextStyle(
             fontSize: fontSize,
-            color: muted,
+            color: appearance.preset.palette(
+              dark ? Brightness.dark : Brightness.light,
+            )['muted'],
             fontFamily: fontFamily,
+            fontWeight: FontWeight.w500,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -2476,7 +2349,9 @@ class ProgressPainter extends CustomPainter {
       t.paint(canvas, Offset(0, y - 4));
     }
     final stroke = Paint()
-      ..color = dark ? const Color(0xFF7AD5B0) : purple
+      ..color = appearance.preset.palette(
+        dark ? Brightness.dark : Brightness.light,
+      )['accent']!
       ..strokeWidth = 2.2
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
@@ -2506,22 +2381,35 @@ class ProgressPainter extends CustomPainter {
     canvas.drawPath(
       fill,
       Paint()
-        ..shader = const LinearGradient(
+        ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0x3432816A), Color(0x0232816A)],
+          colors: [
+            appearance.preset
+                .palette(dark ? Brightness.dark : Brightness.light)['accent']!
+                .withValues(alpha: .15),
+            appearance.preset
+                .palette(dark ? Brightness.dark : Brightness.light)['accent']!
+                .withValues(alpha: .01),
+          ],
         ).createShader(Rect.fromLTWH(left, 0, width, height)),
     );
     canvas.drawPath(path, stroke);
     canvas.drawCircle(
       points.last,
       4,
-      Paint()..color = dark ? const Color(0xFF7AD5B0) : purple,
+      Paint()
+        ..color = appearance.preset.palette(
+          dark ? Brightness.dark : Brightness.light,
+        )['accent']!,
     );
     canvas.drawCircle(
       points.last,
       2,
-      Paint()..color = dark ? const Color(0xFF1B2523) : Colors.white,
+      Paint()
+        ..color = appearance.preset.palette(
+          dark ? Brightness.dark : Brightness.light,
+        )['surface']!,
     );
   }
 

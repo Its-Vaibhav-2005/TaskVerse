@@ -21,7 +21,7 @@ class WorkspaceManager {
   }
   list() {return this.root.db.prepare('SELECT * FROM workspaces ORDER BY rowid').all().map(p=>{const s=this.store(p.id).getPreference('syncState',{});return {...p,dirty:s.dirty||false,status:s.status||(p.sheet_id?'pending':'local'),lastSync:s.lastSync||null,revision:s.revision||0,sharing:s.sharing||'Private · Google account only',error:s.error||null};});}
   activate(id) {this.store(id);this.activeId=id;this.root.setPreference('activeWorkspace',id);return this.snapshot(id);}
-  snapshot(id=this.activeId) {const db=this.store(id);return {format:'trackverse',version:1,alias:this.profile(id).alias,habits:db.load(),months:db.loadMonths()};}
+  snapshot(id=this.activeId) {const db=this.store(id);return {format:'trackverse',version:1,alias:this.profile(id).alias,habits:db.load(),months:db.loadMonths(),focusSessions:db.loadFocusSessions()};}
   readActive() {return {...this.snapshot(),workspaceId:this.activeId,revision:this.store().getPreference('syncState',{}).revision||0};}
   assertRevision(id,revision) {if(id!==this.activeId||revision!==(this.store(id).getPreference('syncState',{}).revision||0))throw Error('This tracker changed while you were editing. Refresh and try again.');}
   add({sheetId,alias,url,account},copyCurrent=false) {

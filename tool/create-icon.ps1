@@ -11,7 +11,7 @@ $shape.AddArc(184,8,64,64,270,90)
 $shape.AddArc(184,184,64,64,0,90)
 $shape.AddArc(8,184,64,64,90,90)
 $shape.CloseFigure()
-$brush = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#32816A'))
+$brush = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#394047'))
 $graphics.FillPath($brush,$shape)
 $pen = [Drawing.Pen]::new([Drawing.Color]::White,15)
 $pen.StartCap = [Drawing.Drawing2D.LineCap]::Round
@@ -39,6 +39,19 @@ $writer.Write([UInt32]$png.Length)
 $writer.Write([UInt32]22)
 $writer.Write($png)
 $writer.Dispose()
+# Keep web/PWA identity consistent with the Windows and in-app mark.
+$webPath = Join-Path $PSScriptRoot '..\web'
+foreach ($iconSize in @(192,512)) {
+    $resized = [Drawing.Bitmap]::new($iconSize,$iconSize)
+    $resizedGraphics = [Drawing.Graphics]::FromImage($resized)
+    $resizedGraphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+    $resizedGraphics.DrawImage($bitmap,0,0,$iconSize,$iconSize)
+    $resized.Save((Join-Path $webPath ('icons\Icon-' + $iconSize + '.png')),[Drawing.Imaging.ImageFormat]::Png)
+    $resized.Save((Join-Path $webPath ('icons\Icon-maskable-' + $iconSize + '.png')),[Drawing.Imaging.ImageFormat]::Png)
+    $resizedGraphics.Dispose()
+    $resized.Dispose()
+}
+$bitmap.Save((Join-Path $webPath 'favicon.png'),[Drawing.Imaging.ImageFormat]::Png)
 $pen.Dispose()
 $brush.Dispose()
 $shape.Dispose()

@@ -375,7 +375,7 @@ class _TrackerGridState extends State<TrackerGrid> {
           SizedBox(height: 12),
           Text(
             ['M', 'T', 'W', 'T', 'F', 'S', 'S'][d.weekday - 1],
-            style: TextStyle(fontSize: 8, color: colors.muted),
+            style: TextStyle(fontSize: 10, color: colors.muted),
           ),
           SizedBox(height: 5),
           Container(
@@ -383,14 +383,16 @@ class _TrackerGridState extends State<TrackerGrid> {
             height: 23,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: today ? Color(0xFF32816A) : Colors.transparent,
+              color: today ? colors.accent : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               '${d.day}',
               style: TextStyle(
                 fontSize: 10,
-                color: today ? Colors.white : colors.text,
+                color: today
+                    ? Theme.of(context).colorScheme.onPrimary
+                    : colors.text,
                 fontWeight: today ? FontWeight.w700 : FontWeight.w500,
               ),
             ),

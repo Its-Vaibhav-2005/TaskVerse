@@ -24,6 +24,13 @@ class TrackVerseDatabase {
       ...h, ...(months?{months:JSON.parse(months)}:{}), weekdays: JSON.parse(h.weekdays), checks: checks.filter(c=>c.habit_id===h.id).map(c=>c.day)
     }));
   }
+  loadFocusSessions(){return this.getPreference('focusSessions',[]);}
+  saveFocusSession(record){
+    if(!record||typeof record.id!=='string'||typeof record.habitId!=='string'||typeof record.name!=='string'||!Number.isInteger(record.color)||record.color<0||record.color>15||!Number.isFinite(record.seconds)||record.seconds<0||record.seconds>10801||!Number.isFinite(Date.parse(record.started)))throw Error('Invalid focus session');
+    const records=this.loadFocusSessions(),index=records.findIndex(r=>r.id===record.id);
+    if(index<0)records.push(record);else records[index]=record;
+    this.setPreference('focusSessions',records);
+  }
   save(habits, inTransaction=false) {
     if(!Array.isArray(habits)||habits.length>10000) throw Error('Invalid habit data');
     const ids=new Set();
@@ -64,15 +71,15 @@ class TrackVerseDatabase {
   restore(backup, inTransaction=false) {
     if(backup.format!=='trackverse'||backup.version!==1)throw Error('Invalid backup');
     if(!inTransaction)this.db.exec('BEGIN IMMEDIATE');
-    try {this.save(backup.habits,true);this.saveMonths(backup.months?.length?backup.months:this.loadMonths(),true);if(!inTransaction)this.db.exec('COMMIT');}
+    try {this.save(backup.habits,true);this.saveMonths(backup.months?.length?backup.months:this.loadMonths(),true);this.setPreference('focusSessions',[]);for(const session of backup.focusSessions||[])this.saveFocusSession(session);if(!inTransaction)this.db.exec('COMMIT');}
     catch(e){if(!inTransaction)this.db.exec('ROLLBACK');throw e;}
   }
   close() { this.db.close(); }
   getPreference(key,fallback=null) {const row=this.db.prepare('SELECT value FROM preferences WHERE key = ?').get(key);return row?JSON.parse(row.value):fallback;}
   setPreference(key,value) {this.db.prepare('INSERT INTO preferences VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run(key,JSON.stringify(value));}
-  getTheme() {return this.db.prepare("SELECT value FROM preferences WHERE key = 'theme'").get()?.value||'light';}
+  getTheme() {return this.db.prepare("SELECT value FROM preferences WHERE key = 'theme'").get()?.value||'system';}
   setTheme(mode) {
-    if(!['light','dark'].includes(mode))throw Error('Invalid appearance');
+    if(!['system','light','dark'].includes(mode))throw Error('Invalid appearance');
     this.db.prepare("INSERT INTO preferences VALUES ('theme', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(mode);
   }
   checkIn(id,day,complete,systemNow=new Date()) {

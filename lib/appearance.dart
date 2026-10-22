@@ -2,9 +2,39 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'desktop_bridge.dart';
+import 'theme_catalog.dart';
+export 'theme_catalog.dart';
 
 class Appearance extends ChangeNotifier {
-  ThemeMode mode = ThemeMode.light;
+  ThemeMode mode = ThemeMode.system;
+  String presetName = 'TrackVerse';
+  ThemePreset get preset => themePresets.firstWhere(
+    (t) => t.name == presetName,
+    orElse: () => themePresets.first,
+  );
+  Future<void> setPreset(String name) async {
+    if (!themePresets.any((t) => t.name == name)) {
+      throw ArgumentError('Unknown theme');
+    }
+    final previous = presetName;
+    presetName = name;
+    notifyListeners();
+    try {
+      if (isWindowsDesktop) {
+        await desktopRequest('setThemePreset', name);
+      } else {
+        await (await SharedPreferences.getInstance()).setString(
+          'themePreset',
+          name,
+        );
+      }
+    } catch (_) {
+      presetName = previous;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   int fontStep = 0;
   String fontFamily = 'Inter';
   static const fonts = ['Inter', 'Lora', 'JetBrains Mono'];
@@ -36,7 +66,17 @@ class Appearance extends ChangeNotifier {
       final saved = isWindowsDesktop
           ? await desktopRequest('getTheme')
           : (await SharedPreferences.getInstance()).getString('appearance');
-      mode = saved == 'dark' ? ThemeMode.dark : ThemeMode.light;
+      mode = saved == 'dark'
+          ? ThemeMode.dark
+          : saved == 'light'
+          ? ThemeMode.light
+          : ThemeMode.system;
+      final savedPreset = isWindowsDesktop
+          ? await desktopRequest('getThemePreset')
+          : (await SharedPreferences.getInstance()).getString('themePreset');
+      presetName = themePresets.any((t) => t.name == savedPreset)
+          ? savedPreset!
+          : 'TrackVerse';
       final raw = isWindowsDesktop
           ? await desktopRequest('getTypography')
           : (await SharedPreferences.getInstance()).getString('typography');
@@ -80,43 +120,48 @@ class AppPalette {
   final bool dark;
   AppPalette(BuildContext context)
     : dark = Theme.of(context).brightness == Brightness.dark;
-  Color get background =>
-      dark ? const Color(0xFF121A19) : const Color(0xFFF8F9FC);
-  Color get surface => dark ? const Color(0xFF1B2523) : Colors.white;
-  Color get raised => dark ? const Color(0xFF22312C) : const Color(0xFFF0F6F2);
-  Color get text => dark ? const Color(0xFFE5EDE8) : const Color(0xFF252735);
-  Color get muted => dark ? const Color(0xFFA0B0A8) : const Color(0xFF92939F);
-  Color get border => dark ? const Color(0xFF32423B) : const Color(0xFFEEEFF3);
-  Color get accent => dark ? const Color(0xFF7AD5B0) : const Color(0xFF32816A);
-  Color get selected =>
-      dark ? const Color(0xFF2B4439) : const Color(0xFFEAF3EE);
+  Map<String, Color> get palette =>
+      appearance.preset.palette(dark ? Brightness.dark : Brightness.light);
+  Color get background => palette['background']!;
+  Color get surface => palette['surface']!;
+  Color get raised => palette['raised']!;
+  Color get text => palette['text']!;
+  Color get muted => palette['muted']!;
+  Color get border => palette['border']!;
+  Color get accent => palette['accent']!;
+  Color get selected => palette['selected']!;
 }
 
 ThemeData trackVerseTheme(Brightness brightness) {
-  final dark = brightness == Brightness.dark;
+  final p = appearance.preset.palette(brightness);
   final scheme =
       ColorScheme.fromSeed(
-        seedColor: const Color(0xFF32816A),
+        seedColor: p['accent']!,
         brightness: brightness,
       ).copyWith(
-        primary: dark ? const Color(0xFF7AD5B0) : const Color(0xFF32816A),
-        onPrimary: dark ? const Color(0xFF142A20) : Colors.white,
-        surface: dark ? const Color(0xFF1B2523) : Colors.white,
-        onSurface: dark ? const Color(0xFFE5EDE8) : const Color(0xFF252735),
+        primary: p['accent'],
+        onPrimary: p['onAccent'],
+        surface: p['surface'],
+        onSurface: p['text'],
+        onSurfaceVariant: p['muted'],
+        outline: p['border'],
       );
-  final border = dark ? const Color(0xFF32423B) : const Color(0xFFEEEFF3);
+  final border = p['border']!;
   return ThemeData(
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
     fontFamily: appearance.fontFamily,
-    scaffoldBackgroundColor: dark
-        ? const Color(0xFF121A19)
-        : const Color(0xFFF8F9FC),
+    scaffoldBackgroundColor: p['background'],
     textTheme: TextTheme(
-      bodyMedium: TextStyle(color: scheme.onSurface, fontSize: 13),
+      bodyMedium: TextStyle(
+        color: scheme.onSurface,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
       bodySmall: TextStyle(
-        color: dark ? const Color(0xFFA0B0A8) : const Color(0xFF92939F),
+        color: p['muted'],
+        fontWeight: FontWeight.w500,
         fontSize: 12,
       ),
     ),
@@ -132,14 +177,14 @@ ThemeData trackVerseTheme(Brightness brightness) {
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
-        color: dark ? const Color(0xFF34493F) : const Color(0xFF263D32),
+        color: p['text'],
         borderRadius: BorderRadius.circular(6),
       ),
-      textStyle: const TextStyle(color: Color(0xFFF0F6F2), fontSize: 11),
+      textStyle: TextStyle(color: p['surface'], fontSize: 11),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: scheme.surface,
-      selectedColor: dark ? const Color(0xFF2B4439) : const Color(0xFFEAF3EE),
+      selectedColor: p['selected'],
       labelStyle: TextStyle(color: scheme.onSurface),
       side: BorderSide(color: border),
     ),
@@ -153,7 +198,7 @@ ThemeData trackVerseTheme(Brightness brightness) {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: dark ? const Color(0xFF15201C) : const Color(0xFFF8F9FC),
+      fillColor: p['background'],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
         borderSide: BorderSide(color: border),

@@ -10,11 +10,22 @@ TrackVerse is a local-first Windows habit tracker with an MSI installer and opti
 
 **[Watch the full video with audio](https://its-vaibhav-2005.github.io/TaskVerse/#walkthrough)** · [Download MP4](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v1.0.0/TrackVerse-Quick-Start.mp4)
 
-A 3-minute, 1080p illustrated guide with English narration, captions, and chapter markers: setup, new habits, daily check-ins, monthly plans, dashboards, appearance, backups, and separate trackers. Only demonstration data appears. The animated preview above is silent; open the full video for narration.
+The original 3-minute, 1080p illustrated guide covers the core workflow with English narration, captions, and chapter markers: setup, new habits, daily check-ins, monthly plans, dashboards, appearance, backups, and separate trackers. Only demonstration data appears. The animated preview above is silent; open the full video for narration.
 
 ## Install on Windows
 
 Download the MSI and its SHA-256 checksum from [Releases](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest), then run the installer. Windows x64 is the currently packaged target. The installer is unsigned, so Windows may identify an unknown publisher. New users can choose local-only setup or optional Google sign-in.
+
+## New in 1.1.0
+
+- Habit-linked Pomodoro with configurable work/break durations, pause/resume, and a floating always-on-top mini window.
+- Smooth animated circular wave timer; actual work time is saved to SQLite, while breaks are excluded.
+- Focus-time donut chart in Insights, colored by habit; sessions are included in cloud and local backups.
+- 43 paired theme presets, searchable previews, automatic System appearance, clearer light-mode text, and neutral branding.
+- Redesigned Settings with grouped appearance, typography, backup controls, and expandable tracker management.
+- Fixes for timer z-order, fixed setup dimensions, unwanted scrollbars, larger text, and interrupted-session recovery.
+
+[Full changelog](CHANGELOG.md) · [Explore all themes](https://its-vaibhav-2005.github.io/TaskVerse/themes.html)
 
 ## Open the preview
 
@@ -64,7 +75,7 @@ Habits, check-ins and month tabs persist across restarts. The Windows backup exp
 - `desktop/main.cjs`: Windows shell, file dialogs and restricted IPC.
 - `lib/storage_native.dart`: SQLite implementation for future direct Flutter builds.
 
-Node 24+ and Flutter stable are required for development. Flutter is installed for this session at `C:\Users\Hey.Vaibhav\.codex\tools\flutter`.
+Node 24+ and Flutter stable are required for development.
 
 ```powershell
 npm ci
@@ -85,7 +96,7 @@ Tests cover schedules, streaks, leap days, narrow layouts, check-in actions, mon
 
 ## Windows MSI packaging
 
-Build the Flutter UI, then run `npm run dist:win` to produce `dist/TrackVerse-Setup-1.0.0-x64.msi`. This is an assisted, per-user Windows x64 MSI with desktop and Start menu shortcuts. The build does not publish to GitHub. Code signing is not configured, so Windows may show an unknown publisher.
+Build the Flutter UI, then run `npm run dist:win -- --config.directories.output=dist/release-1.1.0` to produce `dist/release-1.1.0/TrackVerse-Setup-1.1.0-x64.msi`. This is an assisted, per-user Windows x64 MSI with desktop and Start menu shortcuts. The build does not publish to GitHub. Code signing is not configured, so Windows may show an unknown publisher.
 
 The release preflight permits only a Desktop OAuth client configuration from ignored `.config/google-client.json`. Google treats installed-app clients as public clients: the distributed client configuration cannot be kept confidential inside an MSI. Authentication uses PKCE, state validation, and a loopback callback. Each user grants their own access. Refresh/access tokens and cached account information stay encrypted on that user's Windows device and are never transferred through the installer. Service-account keys are not accepted for release.
 

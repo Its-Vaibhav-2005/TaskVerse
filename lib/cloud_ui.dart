@@ -58,13 +58,13 @@ class WelcomeScreen extends StatelessWidget {
                         width: 64,
                         height: 64,
                         decoration: BoxDecoration(
-                          color: c.accent,
+                          color: const Color(0xFF394047),
                           borderRadius: BorderRadius.circular(18),
                         ),
                         child: Icon(
                           Icons.stacked_line_chart_rounded,
                           size: 39,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -195,6 +195,7 @@ class WelcomeScreen extends StatelessWidget {
 class CloudPanel extends StatelessWidget {
   final Map<String, dynamic> state;
   final bool busy;
+  final bool embedded;
   final Future<void> Function(String, String, bool) action;
   final VoidCallback onCreate;
   final void Function(Map<String, dynamic>) onRename;
@@ -205,6 +206,7 @@ class CloudPanel extends StatelessWidget {
     required this.action,
     required this.onCreate,
     required this.onRename,
+    this.embedded = false,
   });
   @override
   Widget build(BuildContext context) {
@@ -217,33 +219,34 @@ class CloudPanel extends StatelessWidget {
     final identity = state['identity'] as Map?;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(embedded ? 0 : 24),
       decoration: BoxDecoration(
         color: c.surface,
-        border: Border.all(color: c.border),
+        border: embedded ? null : Border.all(color: c.border),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.cloud_outlined, color: c.accent, size: 23),
-              const SizedBox(width: 11),
-              const Expanded(
-                child: Text(
-                  'Trackers & cloud backup',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          if (!embedded)
+            Row(
+              children: [
+                Icon(Icons.cloud_outlined, color: c.accent, size: 23),
+                const SizedBox(width: 11),
+                const Expanded(
+                  child: Text(
+                    'Trackers & cloud backup',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-              if (busy)
-                const SizedBox(
-                  width: 17,
-                  height: 17,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-            ],
-          ),
+                if (busy)
+                  const SizedBox(
+                    width: 17,
+                    height: 17,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+              ],
+            ),
           const SizedBox(height: 10),
           Text(
             connected
@@ -381,70 +384,72 @@ class CloudPanel extends StatelessWidget {
                       ),
                     ],
                   ],
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 9,
-                    runSpacing: 8,
-                    children: [
-                      if (!selected)
-                        OutlinedButton(
-                          onPressed: busy
-                              ? null
-                              : () => action(
-                                  'switchTracker',
-                                  p['id'] as String,
-                                  true,
-                                ),
-                          child: const Text('Switch tracker'),
-                        ),
-                      if (remote) ...[
-                        TextButton.icon(
-                          onPressed:
-                              busy || !connected || state['online'] == false
-                              ? null
-                              : () => _delete(context, p),
-                          icon: const Icon(Icons.delete_outline, size: 15),
-                          label: const Text('Delete tracker & sheet'),
-                        ),
-                        TextButton.icon(
-                          onPressed: busy
-                              ? null
-                              : () => action(
-                                  'openTrackerSheet',
-                                  p['id'] as String,
-                                  false,
-                                ),
-                          icon: const Icon(Icons.open_in_new, size: 14),
-                          label: const Text('Open sheet'),
-                        ),
-                        TextButton.icon(
-                          onPressed: busy || !connected
-                              ? null
-                              : () => action(
-                                  'syncTracker',
-                                  '{"id":"${p['id']}"}',
-                                  true,
-                                ),
-                          icon: const Icon(Icons.sync, size: 15),
-                          label: const Text('Sync now'),
-                        ),
+                  if (!selected || remote || conflict)
+                    const SizedBox(height: 12),
+                  if (!selected || remote || conflict)
+                    Wrap(
+                      spacing: 9,
+                      runSpacing: 8,
+                      children: [
+                        if (!selected)
+                          OutlinedButton(
+                            onPressed: busy
+                                ? null
+                                : () => action(
+                                    'switchTracker',
+                                    p['id'] as String,
+                                    true,
+                                  ),
+                            child: const Text('Switch tracker'),
+                          ),
+                        if (remote) ...[
+                          TextButton.icon(
+                            onPressed:
+                                busy || !connected || state['online'] == false
+                                ? null
+                                : () => _delete(context, p),
+                            icon: const Icon(Icons.delete_outline, size: 15),
+                            label: const Text('Delete tracker & sheet'),
+                          ),
+                          TextButton.icon(
+                            onPressed: busy
+                                ? null
+                                : () => action(
+                                    'openTrackerSheet',
+                                    p['id'] as String,
+                                    false,
+                                  ),
+                            icon: const Icon(Icons.open_in_new, size: 14),
+                            label: const Text('Open sheet'),
+                          ),
+                          TextButton.icon(
+                            onPressed: busy || !connected
+                                ? null
+                                : () => action(
+                                    'syncTracker',
+                                    '{"id":"${p['id']}"}',
+                                    true,
+                                  ),
+                            icon: const Icon(Icons.sync, size: 15),
+                            label: const Text('Sync now'),
+                          ),
+                        ],
+                        if (conflict) ...[
+                          TextButton(
+                            onPressed: busy
+                                ? null
+                                : () => _resolve(context, p, 'remote'),
+                            child: const Text('Use sheet version'),
+                          ),
+                          TextButton(
+                            onPressed: busy
+                                ? null
+                                : () => _resolve(context, p, 'local'),
+                            child: const Text('Keep this device’s version'),
+                          ),
+                        ],
                       ],
-                      if (conflict) ...[
-                        TextButton(
-                          onPressed: busy
-                              ? null
-                              : () => _resolve(context, p, 'remote'),
-                          child: const Text('Use sheet version'),
-                        ),
-                        TextButton(
-                          onPressed: busy
-                              ? null
-                              : () => _resolve(context, p, 'local'),
-                          child: const Text('Keep this device’s version'),
-                        ),
-                      ],
-                    ],
-                  ),
+                    ),
                 ],
               ),
             );
