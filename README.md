@@ -65,9 +65,9 @@ Get-FileHash .\TrackVerse-Setup-1.1.0-x64.msi -Algorithm SHA256
 
 [![TrackVerse quick-start preview](website/media/walkthrough-preview.gif)](https://its-vaibhav-2005.github.io/TaskVerse/#walkthrough)
 
-[Watch with audio, captions, and chapters](https://its-vaibhav-2005.github.io/TaskVerse/#walkthrough) · [Download the MP4](https://its-vaibhav-2005.github.io/TaskVerse/media/TrackVerse-Quick-Start.mp4)
+[Watch with audio, captions, and chapters](https://its-vaibhav-2005.github.io/TaskVerse/index.html#walkthrough) · [Download the cinematic MP4](https://its-vaibhav-2005.github.io/TaskVerse/media/TrackVerse-Cinematic-1080p.mp4) · [English captions](https://its-vaibhav-2005.github.io/TaskVerse/media/TrackVerse-Cinematic.srt) · [Narration transcript](https://its-vaibhav-2005.github.io/TaskVerse/media/TrackVerse-Cinematic-Transcript.md)
 
-The original three-minute, 1080p guide demonstrates setup, habits, daily check-ins, month tabs, dashboards, and backups using demonstration data. It predates the 1.1.0 timer, theme gallery, and Settings redesign. The animated preview is silent; open the full video for narration.
+The **3-minute-25-second cinematic demo and tutorial** is exported at **1920 × 1080, 30 FPS**, with English neural narration, original music, captions, and 17 embedded chapters. It uses authentic application captures and demonstration data to explain local setup, habit creation, today's check-in, monthly planning, dashboard results, Pomodoro controls, the floating timer, themes, typography, and backups. The website includes chapter buttons for jumping to the main tutorial steps. The animated preview is silent; open the full video for narration.
 
 ## Habits and monthly planning
 

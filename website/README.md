@@ -4,6 +4,12 @@ Static homepage and privacy policy, prepared for free GitHub Pages hosting. Thes
 
 Publish only the website folder to a public repository. Do not upload the full desktop workspace. Use `index.html` as the homepage and `privacy.html` as the privacy policy. The maintainer contact matches the Google OAuth project's designated support contact.
 
+## Product video
+
+The homepage plays `media/TrackVerse-Cinematic-1080p.mp4` (3:25, 1920 × 1080, 30 FPS). The approved video was copied from the local `dist/media` release assets. Publish its matching `TrackVerse-Cinematic.vtt`, `.srt`, and `TrackVerse-Cinematic-Transcript.md`, along with `walkthrough-poster.png` and `walkthrough-preview.gif`. The README preview and homepage share these media assets. `walkthrough.js` connects the homepage chapter buttons to the video; update their times if the edit changes.
+
+Pushes to `main` that change `website/**` trigger `.github/workflows/pages.yml`, which deploys this folder to GitHub Pages. Keep video files below GitHub's 100 MB per-file limit. The earlier quick-start assets remain available for existing direct links.
+
 Before public OAuth rollout:
 1. Host these pages at a stable HTTPS address, without a login wall.
 2. Verify ownership of the hosting URL/subdomain in Google Search Console using its supplied HTML verification file or tag.

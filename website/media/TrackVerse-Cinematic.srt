@@ -1,0 +1,211 @@
+1
+00:00:00,650 --> 00:00:04,831
+Big changes start with small steps. Meet TrackVerse. Make room
+
+2
+00:00:04,831 --> 00:00:08,594
+for better habits, and see your progress take shape.
+
+3
+00:00:10,417 --> 00:00:14,641
+When routines live in scattered notes, it is easy to
+
+4
+00:00:14,641 --> 00:00:18,865
+lose the thread. TrackVerse brings your habits, monthly plans, and
+
+5
+00:00:18,865 --> 00:00:20,977
+focus time into one workspace.
+
+6
+00:00:22,783 --> 00:00:26,453
+On the desktop welcome screen, choose Set up locally to
+
+7
+00:00:26,453 --> 00:00:30,123
+begin without an account. Your data is saved on this
+
+8
+00:00:30,123 --> 00:00:33,792
+device in SQLite. Google sign in is available for optional
+
+9
+00:00:33,792 --> 00:00:34,159
+backup.
+
+10
+00:00:35,983 --> 00:00:39,791
+Start with one achievable action. In the habit tracker, choose
+
+11
+00:00:39,791 --> 00:00:43,598
+New habit. Give it a specific name, such as Read
+
+12
+00:00:43,598 --> 00:00:44,359
+twenty pages.
+
+13
+00:00:46,183 --> 00:00:49,835
+Choose a category, select the weekdays you want to repeat,
+
+14
+00:00:49,835 --> 00:00:53,486
+and pick a color and icon. Choose this month only,
+
+15
+00:00:53,486 --> 00:00:56,407
+or all existing months. Then select Create habit.
+
+16
+00:00:58,217 --> 00:01:02,147
+Find your habit row and today’s highlighted column. Click the
+
+17
+00:01:02,147 --> 00:01:06,077
+scheduled cell to mark it complete. The check appears, and
+
+18
+00:01:06,077 --> 00:01:07,649
+your progress updates automatically.
+
+19
+00:01:09,450 --> 00:01:12,647
+You can click again today to undo. Past and future
+
+20
+00:01:12,647 --> 00:01:15,844
+dates stay locked, and only scheduled days can be checked.
+
+21
+00:01:15,844 --> 00:01:18,402
+Focus on the action you can take today.
+
+22
+00:01:20,217 --> 00:01:23,568
+To plan ahead, select the plus beside your month tabs.
+
+23
+00:01:23,568 --> 00:01:26,920
+Choose the month and year, then Add month. You can
+
+24
+00:01:26,920 --> 00:01:29,937
+reuse your habits or start a fresh monthly plan.
+
+25
+00:01:31,750 --> 00:01:36,206
+The dashboard shows completion rate, total check ins, your best
+
+26
+00:01:36,206 --> 00:01:40,662
+current streak, and active habits. Here, one scheduled action is
+
+27
+00:01:40,662 --> 00:01:45,118
+complete. The numbers reflect this demonstration, not a promised result.
+
+28
+00:01:46,950 --> 00:01:50,550
+For focused work, open Pomodoro under Widgets in the desktop
+
+29
+00:01:50,550 --> 00:01:54,150
+sidebar. Choose the habit you want to work on, then
+
+30
+00:01:54,150 --> 00:01:56,310
+set your work and break durations.
+
+31
+00:01:58,117 --> 00:02:01,369
+Press Start to begin. Pause when you need to, and
+
+32
+00:02:01,369 --> 00:02:04,622
+resume when you are ready. Finish or reset to save
+
+33
+00:02:04,622 --> 00:02:07,875
+elapsed work. Breaks and paused time are excluded. The timer
+
+34
+00:02:07,875 --> 00:02:10,477
+does not check off the habit for you.
+
+35
+00:02:12,283 --> 00:02:15,741
+Switch to the compact view to keep the floating timer
+
+36
+00:02:15,741 --> 00:02:19,198
+above your other windows. Recorded work time appears in Focus
+
+37
+00:02:19,198 --> 00:02:22,656
+Insights, grouped by habit, so you can see where your
+
+38
+00:02:22,656 --> 00:02:23,347
+time went.
+
+39
+00:02:25,150 --> 00:02:29,089
+In Settings, open Appearance and browse forty three themes. Every
+
+40
+00:02:29,089 --> 00:02:33,029
+preset supports light and dark modes. Search for a palette,
+
+41
+00:02:33,029 --> 00:02:36,574
+then choose the atmosphere that helps you settle in.
+
+42
+00:02:38,383 --> 00:02:42,401
+Follow your system appearance, or choose light or dark manually.
+
+43
+00:02:42,401 --> 00:02:46,419
+Typography controls let you choose a bundled font and adjust
+
+44
+00:02:46,419 --> 00:02:49,231
+the overall text size for comfortable reading.
+
+45
+00:02:51,050 --> 00:02:55,074
+In Data and privacy, choose Export backup to keep a
+
+46
+00:02:55,074 --> 00:02:59,097
+portable JSON copy. Restore backup lets you bring a saved
+
+47
+00:02:59,097 --> 00:03:03,121
+copy back. Optional Google Sheets backup is managed separately under
+
+48
+00:03:03,121 --> 00:03:04,730
+Trackers and cloud backup.
+
+49
+00:03:06,550 --> 00:03:10,167
+A clear plan. A daily check in. A little time
+
+50
+00:03:10,167 --> 00:03:13,783
+for focused work. TrackVerse brings those small actions together, so
+
+51
+00:03:13,783 --> 00:03:17,038
+you can understand your routine and keep building it.
+
+52
+00:03:18,850 --> 00:03:23,803
+Open TrackVerse, and create your first habit. Small steps. Extraordinary
+
+53
+00:03:23,803 --> 00:03:24,298
+you.

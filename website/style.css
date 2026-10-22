@@ -3,3 +3,5 @@
 .secondary{display:inline-block;margin-left:18px}.walkthrough{padding:10px 0 48px;scroll-margin-top:24px}.walkthrough>p{max-width:760px;color:var(--muted)}video{display:block;width:100%;height:auto;border-radius:18px;border:1px solid var(--line);background:#0c1714;margin-top:24px}
 
 .release-news{background:var(--card);border:1px solid var(--line);padding:28px;border-radius:18px;margin:0 0 42px}.release-news p{max-width:760px;color:var(--muted)}
+
+.video-chapters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.video-chapters button{font:inherit;font-size:14px;text-align:left;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}.video-chapters button span{display:block;color:var(--accent);font-size:12px;font-variant-numeric:tabular-nums}.video-chapters button:hover{border-color:var(--accent)}.video-chapters button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}@media(max-width:700px){.video-chapters{grid-template-columns:repeat(2,minmax(0,1fr))}}
