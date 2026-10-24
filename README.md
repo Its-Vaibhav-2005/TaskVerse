@@ -335,3 +335,8 @@ The assisted per-user installer creates desktop and Start menu shortcuts. Buildi
 ## Feedback
 
 Report bugs or request improvements in [GitHub Issues](https://github.com/Its-Vaibhav-2005/TaskVerse/issues). Include your TrackVerse version, Windows version, and steps to reproduce. Remove personal data, backup contents, and credentials before sharing logs or screenshots.
+
+
+## Code signing policy
+
+TrackVerse's own source is available under the [MIT License](LICENSE). Third-party dependencies and fonts retain their original licenses. See the [Code signing policy](CODE_SIGNING.md) for unsigned release status and preparation for the free SignPath Foundation program. No application has been approved and no SignPath signature has been issued.
