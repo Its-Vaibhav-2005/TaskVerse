@@ -18,3 +18,18 @@ Before public OAuth rollout:
 5. Test consent from an account that was never on the tester list, then verify a successful cloud backup and recovery.
 
 Keep Google Cloud billing disabled and do not enable paid quota increases. Standard API use has quotas; the app retries quota errors and preserves local data.
+
+## Google Search visibility
+
+The homepage identifies TrackVerse as a free Windows habit tracker by Vaibhav Pandey, with matching visible content, search metadata, social previews, and Person/WebSite/SoftwareApplication structured data. All three public HTML pages have canonical URLs and are listed in `sitemap.xml`. Keep structured data and download/version information consistent with the visible release.
+
+After deployment:
+1. Open https://search.google.com/search-console/ and add a **URL prefix** property: `https://its-vaibhav-2005.github.io/TaskVerse/` (include the trailing slash).
+2. Choose **HTML tag** verification. Add the exact Google-supplied `google-site-verification` meta tag to the homepage's `<head>`, deploy, then click Verify. Keep the tag in future releases. Do not invent a verification token. Domain verification requires DNS control and is not appropriate for the shared `github.io` domain.
+3. Submit `https://its-vaibhav-2005.github.io/TaskVerse/sitemap.xml` in the Sitemaps report.
+4. Inspect the homepage URL, test the live URL, and request indexing. Check the themes and privacy URLs for errors as well.
+5. Monitor indexing and search impressions for TrackVerse, Vaibhav Pandey, and relevant habit tracker queries. Link the site from the maintainer's public GitHub profile and other relevant profiles when authorized.
+
+This is a GitHub Pages project site: Google reads robots rules at `https://its-vaibhav-2005.github.io/robots.txt`, not `/TaskVerse/robots.txt`. A project-level robots file would have no crawling effect, so the sitemap is submitted directly in Search Console. A missing root robots file (404) normally allows crawling; check for restrictive rules if the account's root site changes.
+
+SEO changes and sitemap submission cannot guarantee indexing, a date, or first position. Brand and creator searches are more focused targets than the broad “habit tracker” query. Search Console access is needed to confirm Google's indexing status.

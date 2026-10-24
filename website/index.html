@@ -2,10 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="A calmer daily routine, one small habit at a time. TrackVerse is a free, open-source Windows habit tracker with local storage, reminders and focus timers.">
+  <meta name="description" content="TrackVerse by Vaibhav Pandey is a free, open-source habit tracker for Windows. Build daily routines with offline tracking, reminders, progress views and a Pomodoro timer.">
+  <meta name="author" content="Vaibhav Pandey">
+  <link rel="canonical" href="https://its-vaibhav-2005.github.io/TaskVerse/">
   <meta name="theme-color" content="#f7f8f2">
-  <meta property="og:title" content="TrackVerse — Small habits. A clearer day."><meta property="og:description" content="Your habits, focus and progress. Together in one thoughtful Windows app."><meta property="og:image" content="https://its-vaibhav-2005.github.io/TaskVerse/media/walkthrough-poster.png">
-  <title>TrackVerse — Small habits. A clearer day.</title><link rel="stylesheet" href="style.css"><link rel="icon" href="media/trackverse.png">
+  <meta property="og:title" content="TrackVerse — Free Windows Habit Tracker by Vaibhav Pandey"><meta property="og:description" content="Build daily routines with a free, open-source Windows habit tracker. Offline storage, reminders, progress views and focus timers."><meta property="og:image" content="https://its-vaibhav-2005.github.io/TaskVerse/media/walkthrough-poster.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TrackVerse">
+  <meta property="og:url" content="https://its-vaibhav-2005.github.io/TaskVerse/">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>TrackVerse — Free Windows Habit Tracker by Vaibhav Pandey</title><link rel="stylesheet" href="style.css"><link rel="icon" href="media/trackverse.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "https://its-vaibhav-2005.github.io/TaskVerse/#creator",
+        "name": "Vaibhav Pandey",
+        "sameAs": "https://github.com/Its-Vaibhav-2005"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://its-vaibhav-2005.github.io/TaskVerse/#website",
+        "name": "TrackVerse",
+        "url": "https://its-vaibhav-2005.github.io/TaskVerse/",
+        "creator": { "@id": "https://its-vaibhav-2005.github.io/TaskVerse/#creator" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://its-vaibhav-2005.github.io/TaskVerse/#app",
+        "name": "TrackVerse",
+        "url": "https://its-vaibhav-2005.github.io/TaskVerse/",
+        "description": "A free, open-source Windows habit tracker with offline storage, daily targets, reminders, progress views and a Pomodoro focus timer.",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows",
+        "softwareVersion": "1.2.1",
+        "license": "https://github.com/Its-Vaibhav-2005/TaskVerse/blob/main/LICENSE",
+        "downloadUrl": "https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v1.2.1/TrackVerse-Setup-1.2.1-x64.msi",
+        "screenshot": "https://its-vaibhav-2005.github.io/TaskVerse/media/app-overview.png",
+        "author": { "@id": "https://its-vaibhav-2005.github.io/TaskVerse/#creator" },
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -14,7 +55,7 @@
     <section class="hero">
       <a class="release-pill" href="https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v1.2.1"><span class="live-dot" aria-hidden="true"></span> Meet TrackVerse 1.2.1 <span aria-hidden="true">↗</span></a>
       <h1>Small habits.<br>A <em>clearer</em> day.</h1>
-      <p class="hero-copy">A little structure for the things that matter.<br class="desktop-break"> Plan your habits, find your focus, and see yourself grow.</p>
+      <p class="hero-copy">TrackVerse is your free habit tracker for Windows.<br class="desktop-break"> Plan your habits, find your focus, and see yourself grow.</p>
       <div class="hero-actions"><a class="button" href="#download"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2.5 7 1.7v5.6H1zm7-1L15 .5v6.8H8zM1 8.3h6V14l-6-.8zm7 0h7v7.2l-7-1z" fill="currentColor"/></svg>Download for Windows <span aria-hidden="true">↗</span></a><a class="text-link" href="#walkthrough"><span class="play-icon" aria-hidden="true">▶</span> See it in action</a></div>
       <p class="hero-meta">Free &amp; open source <span>·</span> Local storage <span>·</span> No account required</p>
       <div class="product-stage"><div class="window-bar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>A little more intention. Every day.</span><span class="window-label">TRACKVERSE / WINDOWS</span></div><img src="media/app-overview.png" width="1920" height="935" fetchpriority="high" alt="TrackVerse's dark monthly workspace with a completed reading habit, daily progress and weekly summaries. Demonstration data."><div class="stage-caption"><span><span class="live-dot" aria-hidden="true"></span> A workspace that feels like yours</span><span>Real app preview · demonstration data</span></div></div>
@@ -33,6 +74,13 @@
     <section id="walkthrough" class="walkthrough section"><div class="section-heading"><div><p class="eyebrow">TAKE A LOOK AROUND</p><h2>From “one day”<br>to <em>day one.</em></h2></div><p>A guided tour of your next daily workspace.<br>3 minutes, 25 seconds. Your own pace.</p></div><div class="video-frame"><video id="product-demo" controls playsinline preload="none" poster="media/walkthrough-poster.png" aria-label="TrackVerse product tour with demonstration data"><source src="media/TrackVerse-Cinematic-1080p.mp4" type="video/mp4"><track kind="captions" src="media/TrackVerse-Cinematic.vtt" srclang="en" label="English" default>Your browser does not support inline video. <a href="media/TrackVerse-Cinematic-1080p.mp4">Download the tour</a>.</video></div><nav class="video-chapters" aria-label="Video tutorial chapters"><button type="button" data-video-time="22.133"><span>01 / 0:22</span>Get set up <span aria-hidden="true">↗</span></button><button type="button" data-video-time="35.333"><span>02 / 0:35</span>Your first habit <span aria-hidden="true">↗</span></button><button type="button" data-video-time="91.100"><span>03 / 1:31</span>See your progress <span aria-hidden="true">↗</span></button><button type="button" data-video-time="106.300"><span>04 / 1:46</span>Find your focus <span aria-hidden="true">↗</span></button></nav><div class="tour-links"><p>Authentic app captures · demonstration data · English captions</p><a href="media/TrackVerse-Cinematic-Transcript.md">Read the transcript ↗</a><a href="media/TrackVerse-Cinematic-1080p.mp4" download>Download video ↗</a></div></section>
     <section id="download" class="download-section section"><div class="download-main"><p class="eyebrow">YOUR NEXT SMALL STEP</p><h2>A little better.<br><em>Every day.</em></h2><p>Make space for the habits that make you, you.</p><a class="button" href="https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v1.2.1/TrackVerse-Setup-1.2.1-x64.msi"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 2.5 7 1.7v5.6H1zm7-1L15 .5v6.8H8zM1 8.3h6V14l-6-.8zm7 0h7v7.2l-7-1z" fill="currentColor"/></svg>Download TrackVerse <span aria-hidden="true">↗</span></a><p class="download-meta">v1.2.1 · Windows x64 · MSI installer · Free &amp; open source</p><a class="text-link" href="https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v1.2.1">Release notes &amp; checksums ↗</a></div><aside class="download-info"><h3>Before you install</h3><p><strong>This release is unsigned.</strong> Windows Smart App Control may block the installer or app. Keep Windows security protections enabled. Trusted signing is pending.</p><a href="https://github.com/Its-Vaibhav-2005/TaskVerse/blob/main/CODE_SIGNING.md">Code signing policy ↗</a><hr><h3>Already using TrackVerse?</h3><p>Export a backup and quit the app, including its tray process. Run the MSI from the same Windows account and installation scope. The upgrade identity is preserved; clean-machine upgrade testing remains pending.</p><p class="mini-note">Currently available for Windows x64. Linux and Android are planned.</p></aside></section>
     <section class="faq section" aria-label="Common questions"><p class="eyebrow">A FEW GOOD QUESTIONS</p><details><summary>Do I need an account?<span aria-hidden="true">+</span></summary><p>No. Choose local setup and start tracking right away. Google sign-in is optional and used for backup.</p></details><details><summary>What changed in version 1.2.1?<span aria-hidden="true">+</span></summary><p>Completed daily targets now display a tick instead of a full counter. Partial progress still shows your count, such as 3/4. Daily targets and editable reminders introduced in 1.2.0 are included.</p></details><details><summary>Will it remind me when the app is closed?<span aria-hidden="true">+</span></summary><p>With reminders enabled, closing the window keeps TrackVerse running in the system tray. Choosing Quit stops reminders. Open the app again after restarting Windows; automatic startup is not enabled.</p></details><details><summary>Why might Windows block the download?<span aria-hidden="true">+</span></summary><p>The current installer and app are unsigned. A free signing application is under review. A clean malware scan does not guarantee Smart App Control acceptance. Keep Windows protections enabled and see the code signing policy for status.</p></details></section>
+    <section id="about" class="section" aria-labelledby="about-heading">
+      <p class="eyebrow">ABOUT TRACKVERSE</p>
+      <h2 id="about-heading">A habit tracker by Vaibhav Pandey.</h2>
+      <p>Vaibhav Pandey creates and maintains TrackVerse, a free, open-source habit tracker for Windows. Track daily habits, set targets and reminders, review your progress, and make time for focused work with the built-in Pomodoro timer.</p>
+      <p>Your routine starts offline, with local storage and no account required. Optional Google backup helps you keep a copy of your tracker in your own Drive.</p>
+      <a class="text-link" href="https://github.com/Its-Vaibhav-2005">Find Vaibhav Pandey on GitHub ↗</a>
+    </section>
   </main>
   <footer class="site-footer"><div><a class="brand" href="index.html"><span class="brand-symbol" aria-hidden="true">↗</span>TrackVerse<span class="brand-dot">.</span></a><p>Small steps. A little more you.</p></div><nav aria-label="Footer navigation"><a href="https://github.com/Its-Vaibhav-2005/TaskVerse">GitHub ↗</a><a href="privacy.html">Privacy</a><a href="https://github.com/Its-Vaibhav-2005/TaskVerse/blob/main/CODE_SIGNING.md">Code signing policy</a><a href="mailto:vaibhavpandey.cs31@gmail.com">Say hello ↗</a></nav><p class="footer-bottom">Made for a more intentional everyday.<span>TrackVerse 1.2.1 · MIT licensed</span></p></footer>
   <script src="walkthrough.js" defer></script><script src="site.js" defer></script>
