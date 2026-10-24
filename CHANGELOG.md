@@ -1,9 +1,10 @@
 # Changelog
 
-## 1.2.0 — Unreleased (prepared 2026-10-24)
+## 1.2.0 — 2026-10-24
 
-A backward-compatible minor feature update. Publication is pending a publicly
-trusted signing identity, signed installer audit, and clean-machine upgrade test.
+A backward-compatible minor feature update, distributed unsigned at the
+maintainer's request. Trusted signing and clean-machine upgrade acceptance remain
+pending. Smart App Control may still block the application.
 
 ### Added
 - Daily targets from 1–99, with partial progress counters and correction controls.
@@ -19,7 +20,8 @@ trusted signing identity, signed installer audit, and clean-machine upgrade test
 - Existing habits default to one completion per day; existing history is retained.
 - New release builds require signing; the audit verifies trusted signatures,
   timestamps, and the expected publisher before generating release evidence.
-- No new public MSI is supplied until trusted signing is configured and verified.
+- The unsigned 1.2.0 MSI was submitted to Microsoft for review. A clean malware
+  scan is not signing approval or confirmation of Smart App Control acceptance.
 
 ## 1.1.0 — 2026-10-22
 

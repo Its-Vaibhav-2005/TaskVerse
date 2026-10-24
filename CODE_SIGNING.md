@@ -2,9 +2,12 @@
 
 ## Current status
 
-TrackVerse's published 1.0.0 and 1.1.0 Windows releases are unsigned. Version
-1.2.0 is a draft. A free SignPath Foundation application is being prepared;
-it has not been submitted or approved. No SignPath signature has been issued.
+TrackVerse's 1.0.0, 1.1.0, and 1.2.0 Windows installers are unsigned. The free
+SignPath Foundation application was submitted on 2026-10-24; approval and
+Electron artifact coverage remain pending. No SignPath signature has been issued.
+Version 1.2.0 is distributed unsigned at the maintainer's request and may still
+be blocked by Smart App Control. Microsoft file-review submissions are not
+code-signing approval or a guarantee that Windows will allow execution.
 
 TrackVerse's own source code is [MIT licensed](LICENSE). Third-party software
 and fonts retain their original licenses and notices.

@@ -31,8 +31,9 @@ Never commit signing credentials. Keep the same verified publisher for updates.
 TrackVerse's maintainer has selected **free services only**. The current route
 is the [SignPath Foundation open-source program](https://signpath.org/apply).
 On 2026-10-24 a support request was sent because the embedded application form
-did not load. This is a support inquiry, not an approved signing application.
-No certificate has been issued and no SignPath signing integration is configured.
+did not load. The form later loaded and the formal application was submitted.
+Approval remains pending. No certificate has been issued and no SignPath signing
+integration is configured.
 
 The Foundation must confirm eligibility, build provenance, approval roles, and
 coverage for upstream Electron binaries before integration. Do not put a
