@@ -443,20 +443,19 @@ class _TrackerGridState extends State<TrackerGrid> {
                     ? () => widget.onToggle(h, d)
                     : null,
                 child: Center(
-                  child:
-                      h.dailyTarget > 1 &&
-                          h.scheduled(d) &&
-                          !d.isAfter(widget.now)
+                  child: done
+                      ? Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                      : h.dailyTarget > 1 &&
+                            h.scheduled(d) &&
+                            !d.isAfter(widget.now)
                       ? Text(
                           '${h.countOn(d)}/${h.dailyTarget}',
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
-                            color: done ? Colors.white : color,
+                            color: color,
                           ),
                         )
-                      : done
-                      ? Icon(Icons.check_rounded, size: 16, color: Colors.white)
                       : !h.scheduled(d) || d.isAfter(widget.now)
                       ? Text(
                           '—',

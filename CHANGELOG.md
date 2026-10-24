@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.1 — 2026-10-24
+
+### Fixed
+- Completed daily targets show the normal check mark instead of a full n/n
+  counter. Partial progress continues to show n/target; corrections reopen it.
+
+### Website
+- Redesigned the download page with a clearer product preview, concise feature
+  sections, an interactive habit-counter example, and responsive layouts.
+- Kept the tutorial, theme gallery, privacy information, and signing status accessible.
+
+### Distribution
+- Windows x64 MSI, compatible upgrade identity retained. Installer and app remain
+  unsigned; Smart App Control may still block execution. SignPath approval,
+  clean-machine installation and upgrade acceptance remain pending.
+
 ## 1.2.0 — 2026-10-24
 
 A backward-compatible minor feature update, distributed unsigned at the

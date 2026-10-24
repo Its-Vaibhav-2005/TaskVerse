@@ -51,10 +51,10 @@ test('release version and installer identity preserve the released 1.1.0 upgrade
   const baseline = require('./windows-upgrade-baseline.json');
   const { UUID } = require('builder-util-runtime');
   const legacyDefault = UUID.v5(baseline.appId, UUID.parse('d752fe43-5d44-44d5-9fc9-6dd1bf19d5cc')).toUpperCase();
-  assert.equal(pkg.version, '1.2.0');
+  assert.equal(pkg.version, '1.2.1');
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[''].version, pkg.version);
-  assert.match(fs.readFileSync(path.join(__dirname, '../pubspec.yaml'), 'utf8'), /^version: 1\.2\.0\+3$/m);
+  assert.match(fs.readFileSync(path.join(__dirname, '../pubspec.yaml'), 'utf8'), /^version: 1\.2\.1\+4$/m);
   assert.equal(pkg.build.msi.upgradeCode, baseline.upgradeCode);
   assert.equal(pkg.build.msi.upgradeCode, legacyDefault);
   assert.equal(pkg.build.appId, baseline.appId);

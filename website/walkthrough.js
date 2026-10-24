@@ -14,6 +14,8 @@ document.querySelectorAll('[data-video-time]').forEach(button => {
       playChapter();
     } else {
       productDemo.addEventListener('loadedmetadata', playChapter, { once: true });
+      productDemo.preload = 'metadata';
+      productDemo.load();
     }
   });
 });

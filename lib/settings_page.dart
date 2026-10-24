@@ -606,7 +606,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'TrackVerse 1.2.0',
+                  'TrackVerse 1.2.1',
                   style: TextStyle(color: c.muted, fontSize: 10),
                 ),
               ],

@@ -4,7 +4,7 @@
 
 TrackVerse is a local-first Windows habit tracker with a spreadsheet-style workspace, habit-linked Pomodoro timer, automatic progress dashboards, and optional Google Sheets backup. Your everyday work is saved in native SQLite, including when you are offline.
 
-**Current release: 1.2.0 · Windows x64 · unsigned**
+**Current release: 1.2.1 · Windows x64 · unsigned**
 
 **Trusted signing is pending. Smart App Control may still block this application.**
 
@@ -43,9 +43,9 @@ TrackVerse is a local-first Windows habit tracker with a spreadsheet-style works
 | Portable backups | Export and restore habits, monthly plans, check-ins, and focus sessions as JSON. |
 | Organized Settings | Manage appearance, typography, trackers, backups, and daily behavior in responsive grouped cards. |
 
-### New in 1.2.0
+### New in 1.2.1
 
-This release adds daily habit counters, partial progress and correction controls, and editable reminders that repeat until the daily target is complete. Reminders can continue through the system tray. Existing habits default to one completion per day and retain their history. See the [full changelog](CHANGELOG.md).
+Completed daily targets now show a tick instead of a full n/n counter; partial progress still shows n/target. Daily counters, editable reminders, and system tray support from 1.2.0 are included. The download website has also been redesigned. Existing habits and their history are retained. See the [full changelog](CHANGELOG.md).
 
 ## Install and get started
 
@@ -56,12 +56,12 @@ This release adds daily habit counters, partial progress and correction controls
 5. Click today's scheduled cell to record progress; use the count controls for habits with a daily target above one.
 6. Use the month-bar **+** to plan another month, or open **Widgets → Pomodoro** to focus on a habit.
 
-New installations start without sample habits or personal account credentials. The 1.2.0 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled; use a verified signed replacement release when available. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
+New installations start without sample habits or personal account credentials. The 1.2.1 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled; use a verified signed replacement release when available. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
 
 To verify the installer, compare this PowerShell result with the checksum supplied alongside your download:
 
 ```powershell
-Get-FileHash .\TrackVerse-Setup-1.2.0-x64.msi -Algorithm SHA256
+Get-FileHash .\TrackVerse-Setup-1.2.1-x64.msi -Algorithm SHA256
 ```
 
 ### Watch the walkthrough
@@ -276,9 +276,9 @@ Read the [privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.h
 
 ### Release validation
 
-Version 1.2.0 passed **29 desktop tests, 21 Flutter tests, and 6 release-policy tests**, with a clean Flutter analyzer and a successful web build. Local package inspection verified versions, required feature files, the license, the existing MSI upgrade identity, and exclusion of personal databases and token files.
+Version 1.2.1 passed **29 desktop tests, 21 Flutter tests, and 6 release-policy tests**, with a clean Flutter analyzer and a successful web build. Local package inspection checks versions, required feature files, the license, the existing MSI upgrade identity, and exclusion of personal databases and token files.
 
-The 1.2.0 installer is distributed unsigned at the maintainer's request. Normal release builds require signing and a Windows signature audit; see [Windows signing setup](docs/windows-signing.md). The attached limited verification report is not a successful trusted-signature audit. Microsoft review and SignPath approval remain pending. WiX ICE validation is disabled because the build host policy blocks it; system policy was not changed. Clean-machine installation, upgrade, and Smart App Control acceptance remain unverified. These checks are not a security certification.
+The 1.2.1 installer is distributed unsigned at the maintainer's request. Normal release builds require signing and a Windows signature audit; see [Windows signing setup](docs/windows-signing.md). The attached limited verification report is not a successful trusted-signature audit. Microsoft reviews of older builds do not validate this new binary. SignPath approval remains pending. WiX ICE validation is disabled because the build host policy blocks it; system policy was not changed. Clean-machine installation, upgrade, and Smart App Control acceptance remain unverified. These checks are not a security certification.
 
 ## Development and packaging
 
