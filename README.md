@@ -6,6 +6,8 @@ TrackVerse is a local-first Windows habit tracker with a spreadsheet-style works
 
 **Current release: 1.1.0 · Windows x64**
 
+**Next version: 1.2.0 · prepared locally; signed Windows installer pending.**
+
 [Download Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
 
 ## Explore
@@ -53,7 +55,7 @@ This release adds the Pomodoro widget and focus-time Insights, 43 paired theme p
 5. Click today's scheduled cell to complete the habit. Click it again today to undo.
 6. Use the month-bar **+** to plan another month, or open **Widgets → Pomodoro** to focus on a habit.
 
-New installations start without sample habits or personal account credentials. The MSI is unsigned, so Windows may show an unknown publisher. For upgrades, export a backup first, close TrackVerse, and install the newer release. User data is stored separately from the installation files.
+New installations start without sample habits or personal account credentials. The original 1.1.0 MSI is unsigned and can be blocked by Smart App Control. Keep Windows protection enabled; use a verified signed replacement release when available. For upgrades, export a backup first, close TrackVerse, and install the newer release. User data is stored separately from the installation files.
 
 To verify the installer, compare this PowerShell result with the checksum supplied alongside your download:
 
@@ -92,6 +94,27 @@ Only **future month tabs** can be deleted. Current and past months are protected
 ### Daily check-in rules
 
 Only today's scheduled cells can be marked or unmarked. Past and future dates, unscheduled weekdays, and dates before habit creation are locked. Saved past completions remain visible.
+
+### Daily targets and reminders
+
+In **New habit** or **Edit habit**, choose a **Daily target** from 1–99 times.
+Habits with a target above one show progress such as **3/8** in the grid. Click
+today's cell, adjust the count with **+ / −**, then choose **Save progress**.
+Only reaching the target completes the day for rates and streaks. Existing
+habits keep their single-check behavior and saved history.
+
+Turn on **Remind me**, choose the **First reminder** time and **Repeat every**
+interval. Edit either setting later through the habit's **… → Edit habit** menu.
+Windows notifications repeat on scheduled days until today's target is reached
+or the day ends. An edited schedule takes effect on the next reminder check
+(within about 15 seconds). Counts and reminder settings are included in backups.
+
+When reminders are enabled, closing the window keeps TrackVerse in the Windows
+system tray. Double-click its tray icon to reopen it, or use **Quit TrackVerse**
+to stop it. Open the app again after restarting Windows; this feature does not
+enable startup automatically. Windows notification settings and Do Not Disturb
+can suppress alerts. Browser previews save reminder settings; native Windows
+notifications are provided by the desktop app.
 
 TrackVerse reads your device's local date, refreshes at midnight and on resume, and responds to clock changes. The native database checks the date again before writing a check-in, so an overnight-open screen cannot edit yesterday.
 
@@ -254,7 +277,7 @@ Read the [privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.h
 
 Version 1.1.0 passed **25 native desktop tests and 19 Flutter tests**, with a clean Flutter analyzer and no known production dependency vulnerabilities reported by the build-time audit. Packaged startup was checked with an empty profile and no personal tokens.
 
-The installer is unsigned. WiX ICE validation is disabled in this build environment because the host's Windows Installer policy blocks it; system policy was not changed. Archive inspection and checksum generation are performed separately. Clean-machine installation/uninstallation testing remains recommended before wider deployment; these checks are not a security certification.
+The original 1.1.0 installer is unsigned. New release builds require signing and a Windows signature audit; see [Windows signing setup](docs/windows-signing.md). WiX ICE validation is disabled in this build environment because the host's Windows Installer policy blocks it; system policy was not changed. Archive inspection and checksum generation are performed separately. Clean-machine installation/uninstallation testing remains recommended before wider deployment; these checks are not a security certification.
 
 ## Development and packaging
 
@@ -300,11 +323,11 @@ Coverage includes schedules, streaks, date locks, monthly assignments, responsiv
 
 ```powershell
 flutter build web --no-web-resources-cdn
-npm run dist:win -- --config.directories.output=dist/release-1.1.0
-node tool/audit-release.cjs dist/release-1.1.0
+npm run dist:win -- --config.directories.output=dist/signed-release
+npm run audit:release -- dist/signed-release
 ```
 
-The assisted per-user installer creates desktop and Start menu shortcuts. Building does not publish a release to GitHub. The audit inspects the packaged application and produces release evidence and a SHA-256 checksum. Code signing is not configured.
+First configure a publicly trusted signing identity using the [Windows signing guide](docs/windows-signing.md). The assisted per-user installer creates desktop and Start menu shortcuts. Building does not publish a release to GitHub. Release builds require code signing; the audit verifies Windows signatures, timestamps, publisher identity, and packaged content before producing release evidence and a SHA-256 checksum. Run `npm run test:release` to check the signing configuration rules.
 
 ### Theme catalog and demo data
 

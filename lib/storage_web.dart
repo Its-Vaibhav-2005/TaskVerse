@@ -111,6 +111,23 @@ class HabitStorage {
   }
 
   Future<void> close() async {}
+  Future<void> setDailyCount(String id, String day, int count) async {
+    desktopRevision =
+        jsonDecode(
+              await desktopRequest(
+                'setDailyCount',
+                jsonEncode({
+                  'workspaceId': desktopWorkspaceId,
+                  'revision': desktopRevision,
+                  'id': id,
+                  'day': day,
+                  'count': count,
+                }),
+              ),
+            )
+            as int;
+  }
+
   Future<void> setCheckIn(String id, String day, bool complete) async {
     desktopRevision =
         jsonDecode(

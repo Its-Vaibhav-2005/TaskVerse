@@ -9,6 +9,10 @@ import 'model.dart';
 class HabitStorage {
   String get desktopWorkspaceId => 'local';
   int get desktopRevision => 0;
+  Future<void> setDailyCount(String id, String day, int count) async {
+    throw UnsupportedError('The desktop bridge handles Windows counts.');
+  }
+
   Future<void> setCheckIn(String id, String day, bool complete) async {
     throw UnsupportedError('The desktop bridge handles Windows check-ins.');
   }
@@ -27,11 +31,20 @@ class HabitStorage {
     await directory.create(recursive: true);
     _db = await openDatabase(
       databasePath ?? p.join(directory.path, 'trackverse.sqlite3'),
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE habits ADD COLUMN dailyTarget INTEGER NOT NULL DEFAULT 1',
+          );
+          await db.execute(
+            "ALTER TABLE habits ADD COLUMN dailyCounts TEXT NOT NULL DEFAULT '{}'",
+          );
+          await db.execute('ALTER TABLE habits ADD COLUMN reminder TEXT');
+        }
         if (oldVersion < 3) {
           await db.execute('ALTER TABLE habits ADD COLUMN months TEXT');
         }
@@ -42,7 +55,7 @@ class HabitStorage {
       onCreate: (db, version) async {
         await db.execute('CREATE TABLE months (month TEXT PRIMARY KEY)');
         await db.execute(
-          'CREATE TABLE habits (id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, color INTEGER NOT NULL, icon INTEGER NOT NULL, created TEXT NOT NULL, weekdays TEXT NOT NULL, months TEXT)',
+          "CREATE TABLE habits (id TEXT PRIMARY KEY, name TEXT NOT NULL, category TEXT NOT NULL, color INTEGER NOT NULL, icon INTEGER NOT NULL, created TEXT NOT NULL, weekdays TEXT NOT NULL, months TEXT, dailyTarget INTEGER NOT NULL DEFAULT 1, dailyCounts TEXT NOT NULL DEFAULT '{}', reminder TEXT)",
         );
         await db.execute(
           'CREATE TABLE completions (habit_id TEXT NOT NULL REFERENCES habits(id) ON DELETE CASCADE, day TEXT NOT NULL, PRIMARY KEY(habit_id, day))',
@@ -71,6 +84,10 @@ class HabitStorage {
         .map(
           (r) => Habit.fromJson({
             ...r,
+            'dailyCounts': jsonDecode(r['dailyCounts'] as String),
+            'reminder': r['reminder'] == null
+                ? null
+                : jsonDecode(r['reminder'] as String),
             'weekdays': jsonDecode(r['weekdays'] as String),
             'months': r['months'] == null
                 ? null
@@ -91,6 +108,10 @@ class HabitStorage {
       final batch = tx.batch();
       for (final h in habits) {
         final row = h.toJson()..remove('checks');
+        row['dailyCounts'] = jsonEncode(row['dailyCounts']);
+        row['reminder'] = row['reminder'] == null
+            ? null
+            : jsonEncode(row['reminder']);
         row['weekdays'] = jsonEncode(row['weekdays']);
         row['months'] = row['months'] == null
             ? null
@@ -121,6 +142,10 @@ class HabitStorage {
       }
       for (final h in habits) {
         final row = h.toJson()..remove('checks');
+        row['dailyCounts'] = jsonEncode(row['dailyCounts']);
+        row['reminder'] = row['reminder'] == null
+            ? null
+            : jsonEncode(row['reminder']);
         row['weekdays'] = jsonEncode(row['weekdays']);
         row['months'] = row['months'] == null
             ? null

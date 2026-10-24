@@ -21,6 +21,9 @@ void main() {
         icon: 0,
         created: DateTime(2026, 10, 1),
         checks: {'2026-10-21'},
+        dailyTarget: 8,
+        dailyCounts: {'2026-10-22': 3},
+        reminder: {'enabled': true, 'time': '09:30', 'interval': 60},
       );
       await first.save([h]);
       await first.saveMonths([DateTime(2026, 10), DateTime(2026, 11)]);

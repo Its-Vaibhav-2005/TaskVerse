@@ -16,12 +16,14 @@ class TrackVerseDatabase {
       CREATE TABLE IF NOT EXISTS preferences (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       PRAGMA user_version = 2;`);
     if(!this.db.prepare('PRAGMA table_info(habits)').all().some(c=>c.name==='months'))this.db.exec('ALTER TABLE habits ADD COLUMN months TEXT');
-    this.db.exec('PRAGMA user_version = 3');
+    const columns=this.db.prepare('PRAGMA table_info(habits)').all().map(c=>c.name);
+    for(const [name,type] of [['dailyTarget','INTEGER NOT NULL DEFAULT 1'],['dailyCounts',"TEXT NOT NULL DEFAULT '{}'"],['reminder','TEXT']])if(!columns.includes(name))this.db.exec(`ALTER TABLE habits ADD COLUMN ${name} ${type}`);
+    this.db.exec('PRAGMA user_version = 4');
   }
   load() {
     const checks = this.db.prepare('SELECT * FROM completions').all();
-    return this.db.prepare('SELECT * FROM habits ORDER BY rowid').all().map(({months,...h}) => ({
-      ...h, ...(months?{months:JSON.parse(months)}:{}), weekdays: JSON.parse(h.weekdays), checks: checks.filter(c=>c.habit_id===h.id).map(c=>c.day)
+    return this.db.prepare('SELECT * FROM habits ORDER BY rowid').all().map(({months,dailyCounts,reminder,...h}) => ({
+      ...h, dailyCounts:JSON.parse(dailyCounts),reminder:reminder?JSON.parse(reminder):null, ...(months?{months:JSON.parse(months)}:{}), weekdays: JSON.parse(h.weekdays), checks: checks.filter(c=>c.habit_id===h.id).map(c=>c.day)
     }));
   }
   loadFocusSessions(){return this.getPreference('focusSessions',[]);}
@@ -37,15 +39,18 @@ class TrackVerseDatabase {
     for(const h of habits) {
       if(!h||typeof h.id!=='string'||!h.id||ids.has(h.id)||typeof h.name!=='string'||!h.name.trim()||h.name.length>60||typeof h.category!=='string'||!Number.isInteger(h.color)||h.color<0||h.color>15||!Number.isInteger(h.icon)||h.icon<0||h.icon>25||!validDay(h.created)||!Array.isArray(h.weekdays)||!h.weekdays.length||h.weekdays.some(d=>!Number.isInteger(d)||d<1||d>7)||!Array.isArray(h.checks)||h.checks.some(d=>!validDay(d))) throw Error('Invalid habit data');
       if(h.months!=null&&(!Array.isArray(h.months)||h.months.some(m=>!validDay(m)||!m.endsWith('-01'))))throw Error('Invalid habit month scope');
+      if(!Number.isInteger(h.dailyTarget??1)||(h.dailyTarget??1)<1||(h.dailyTarget??1)>99)throw Error('Daily target must be between 1 and 99.');
+      if(h.dailyCounts!=null&&(typeof h.dailyCounts!=='object'||Array.isArray(h.dailyCounts)||Object.entries(h.dailyCounts).some(([day,count])=>!validDay(day)||!Number.isInteger(count)||count<0||count>99)))throw Error('Invalid daily counts.');
+      if(h.reminder!=null&&(typeof h.reminder!=='object'||typeof h.reminder.enabled!=='boolean'||!/^([01]\d|2[0-3]):[0-5]\d$/.test(h.reminder.time)||!Number.isInteger(h.reminder.interval)||h.reminder.interval<5||h.reminder.interval>720))throw Error('Invalid reminder schedule.');
       ids.add(h.id);
     }
     if(!inTransaction)this.db.exec('BEGIN IMMEDIATE');
     try {
       this.db.exec('DELETE FROM completions; DELETE FROM habits;');
-      const insert=this.db.prepare('INSERT INTO habits VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+      const insert=this.db.prepare('INSERT INTO habits (id,name,category,color,icon,created,weekdays,months,dailyTarget,dailyCounts,reminder) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
       const check=this.db.prepare('INSERT INTO completions VALUES (?, ?)');
       for(const h of habits) {
-        insert.run(h.id,h.name,h.category,h.color,h.icon,h.created,JSON.stringify(h.weekdays),h.months==null?null:JSON.stringify(h.months));
+        insert.run(h.id,h.name,h.category,h.color,h.icon,h.created,JSON.stringify(h.weekdays),h.months==null?null:JSON.stringify(h.months),h.dailyTarget??1,JSON.stringify(h.dailyCounts??{}),h.reminder==null?null:JSON.stringify(h.reminder));
         for(const day of h.checks) check.run(h.id,day);
       }
       if(!inTransaction)this.db.exec('COMMIT');
@@ -83,12 +88,20 @@ class TrackVerseDatabase {
     this.db.prepare("INSERT INTO preferences VALUES ('theme', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(mode);
   }
   checkIn(id,day,complete,systemNow=new Date()) {
+    if(typeof complete!=='boolean')throw Error('Invalid completion flag.');
+    const target=this.db.prepare('SELECT dailyTarget FROM habits WHERE id = ?').get(id)?.dailyTarget||1;
+    this.setCount(id,day,complete?target:0,systemNow);
+  }
+  setCount(id,day,count,systemNow=new Date()) {
     const localDay=`${systemNow.getFullYear()}-${String(systemNow.getMonth()+1).padStart(2,'0')}-${String(systemNow.getDate()).padStart(2,'0')}`;
     if(day!==localDay)throw Error('Only today can be changed. Past days are locked.');
     const habit=this.db.prepare('SELECT * FROM habits WHERE id = ?').get(id);
     const weekday=systemNow.getDay()||7;
-    if(!habit||habit.created>day||habit.months&&!JSON.parse(habit.months).includes(day.slice(0,7)+'-01')||!JSON.parse(habit.weekdays).includes(weekday)||typeof complete!=='boolean')throw Error('This habit is not scheduled today.');
-    if(complete)this.db.prepare('INSERT OR IGNORE INTO completions VALUES (?, ?)').run(id,day);
+    if(!habit||habit.created>day||habit.months&&!JSON.parse(habit.months).includes(day.slice(0,7)+'-01')||!JSON.parse(habit.weekdays).includes(weekday))throw Error('This habit is not scheduled today.');
+    if(!Number.isInteger(count)||count<0||count>habit.dailyTarget)throw Error('Count must be between zero and the daily target.');
+    const counts=JSON.parse(habit.dailyCounts);counts[day]=count;
+    this.db.prepare('UPDATE habits SET dailyCounts = ? WHERE id = ?').run(JSON.stringify(counts),id);
+    if(count>=habit.dailyTarget)this.db.prepare('INSERT OR IGNORE INTO completions VALUES (?, ?)').run(id,day);
     else this.db.prepare('DELETE FROM completions WHERE habit_id = ? AND day = ?').run(id,day);
   }
 }

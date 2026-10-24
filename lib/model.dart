@@ -107,6 +107,9 @@ class Habit {
   final DateTime created;
   final Set<int> weekdays;
   final Set<String> checks;
+  final int dailyTarget;
+  final Map<String, int> dailyCounts;
+  final Map<String, dynamic>? reminder;
   Set<String>? months;
   Habit({
     required this.id,
@@ -117,9 +120,25 @@ class Habit {
     required this.created,
     Set<int>? weekdays,
     Set<String>? checks,
+    this.dailyTarget = 1,
+    Map<String, int>? dailyCounts,
+    this.reminder,
     this.months,
   }) : weekdays = weekdays ?? {1, 2, 3, 4, 5, 6, 7},
-       checks = checks ?? {};
+       checks = checks ?? {},
+       dailyCounts = dailyCounts ?? {};
+  int countOn(DateTime date) =>
+      dailyCounts[dayKey(date)] ?? (done(date) ? dailyTarget : 0);
+  void setCount(DateTime date, int count) {
+    final key = dayKey(date);
+    dailyCounts[key] = count.clamp(0, dailyTarget);
+    if (count >= dailyTarget) {
+      checks.add(key);
+    } else {
+      checks.remove(key);
+    }
+  }
+
   bool inMonth(DateTime date) =>
       months == null || months!.contains(monthKey(date));
   bool scheduled(DateTime date) =>
@@ -177,6 +196,9 @@ class Habit {
     'weekdays': weekdays.toList(),
     'checks': checks.toList(),
     'months': months?.toList(),
+    'dailyTarget': dailyTarget,
+    'dailyCounts': dailyCounts,
+    'reminder': reminder,
   };
   factory Habit.fromJson(Map<String, dynamic> j) => Habit(
     id: j['id'] as String,
@@ -188,5 +210,12 @@ class Habit {
     weekdays: (j['weekdays'] as List).cast<int>().toSet(),
     checks: (j['checks'] as List).cast<String>().toSet(),
     months: (j['months'] as List?)?.cast<String>().toSet(),
+    dailyTarget: (j['dailyTarget'] as int?) ?? 1,
+    dailyCounts: j['dailyCounts'] == null
+        ? null
+        : Map<String, int>.from(j['dailyCounts'] as Map),
+    reminder: j['reminder'] == null
+        ? null
+        : Map<String, dynamic>.from(j['reminder'] as Map),
   );
 }

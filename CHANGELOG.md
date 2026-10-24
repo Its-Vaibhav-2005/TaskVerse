@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0 — Unreleased (prepared 2026-10-24)
+
+A backward-compatible minor feature update. Publication is pending a publicly
+trusted signing identity, signed installer audit, and clean-machine upgrade test.
+
+### Added
+- Daily targets from 1–99, with partial progress counters and correction controls.
+- Editable first reminder time and repeat interval for each habit.
+- Windows notifications on scheduled days until the daily target is complete.
+- A system tray menu so reminders can continue after closing the main window.
+- Counter progress and reminder settings in SQLite and local/Google backups.
+
+### Upgrade and distribution
+- Version numbers follow Major.Minor.Micro: 1.2.0 adds compatible features to 1.1.0.
+- Preserve the existing MSI UpgradeCode, application ID, per-user installation
+  scope, installation name, and data directory for an in-place MSI upgrade.
+- Existing habits default to one completion per day; existing history is retained.
+- New release builds require signing; the audit verifies trusted signatures,
+  timestamps, and the expected publisher before generating release evidence.
+- No new public MSI is supplied until trusted signing is configured and verified.
+
 ## 1.1.0 — 2026-10-22
 
 A minor feature release with UI refinements and timer fixes. Existing habit data remains compatible; export a backup before upgrading.

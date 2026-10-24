@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol, net, dialog, nativeTheme, safeStorage, shell }=require('electron');
+const { app, BrowserWindow, ipcMain, protocol, net, dialog, nativeTheme, safeStorage, shell, Notification, Tray, Menu }=require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
 const {pathToFileURL}=require('node:url');
@@ -9,12 +9,38 @@ const {SyncEngine}=require('./sync-engine.cjs');
 const {Pomodoro}=require('./pomodoro.cjs');
 const {themes,themePalette}=require('./theme-palette.cjs');
 const {keepFocusOnTop,setFocusLayout}=require('./focus-window.cjs');
+const {HabitReminders}=require('./reminders.cjs');
 
 protocol.registerSchemesAsPrivileged([{scheme:'trackverse',privileges:{standard:true,secure:true,supportFetchAPI:true,corsEnabled:true,stream:true}}]);
 if(process.env.TRACKVERSE_DATA_DIR){const isolated=path.resolve(process.env.TRACKVERSE_DATA_DIR);fs.mkdirSync(isolated,{recursive:true});app.setPath('userData',isolated);}
 const gotLock=app.requestSingleInstanceLock();
 if(!gotLock) app.quit();
 let win,store,manager,auth,sheets,sync,connectionTimer,pomodoro,timerWindow,focusInterval,online=false;
+let reminders,tray,quitting=false;
+const activeNotifications = new Map();
+function showMainWindow(){if(win){win.show();if(win.isMinimized())win.restore();win.focus();}}
+function hasReminders(){return manager.list().some(p=>manager.store(p.id).load().some(h=>h.reminder?.enabled));}
+function notifyHabit(message){
+  if(!Notification.isSupported())return false;
+  const key=JSON.stringify([message.workspaceId,message.habitId]);
+  activeNotifications.get(key)?.close();
+  const notification=new Notification({title:`TrackVerse · ${message.title}`,body:message.body,icon:path.join(app.getAppPath(),'assets','trackverse.ico')});
+  activeNotifications.set(key,notification);
+  notification.on('click',showMainWindow);
+  notification.on('close',()=>{if(activeNotifications.get(key)===notification)activeNotifications.delete(key);});
+  notification.on('failed',(_,error)=>{console.error('Habit notification failed:',error);});
+  notification.show();
+  return true;
+}
+function refreshReminders(){
+  // Withdraw an outstanding toast immediately when its target is reached or disabled.
+  for(const [key,notification] of activeNotifications){
+    const [id,habitId]=JSON.parse(key);
+    const habit=manager.profile(id)&&manager.store(id).load().find(h=>h.id===habitId);
+    const now=new Date(),day=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    if(!habit?.reminder?.enabled||habit.checks.includes(day)){notification.close();activeNotifications.delete(key);}
+  }
+}
 async function checkConnection(){try{const response=await net.fetch('https://www.gstatic.com/generate_204',{cache:'no-store',signal:AbortSignal.timeout(7000)});online=response.status===204;}catch(_){online=false;}}
 function cloudState() {return {...auth.status(),online:online&&net.isOnline(),activeId:manager.activeId,profiles:manager.list(),onboarded:store.getPreference('cloudOnboarded',false)};}
 async function discoverTrackers() {
@@ -32,7 +58,7 @@ async function createTracker(alias,copyCurrent) {
   await sync.sync(id,{force:true}).catch(()=>{});
   manager.activate(id);return cloudState();
 }
-app.on('second-instance',()=>{if(win){if(win.isMinimized())win.restore();win.focus();}});
+app.on('second-instance',showMainWindow);
 app.whenReady().then(async()=>{
   if(!gotLock)return;
   app.setAppUserModelId('app.trackverse.desktop');
@@ -120,8 +146,9 @@ app.whenReady().then(async()=>{
         manager.mutate(workspaceId,db=>db.savePlan(data.habits,data.months,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);
       }
       case 'setTheme':store.setTheme(payload);nativeTheme.themeSource=payload;return '{}';
+      case 'setDailyCount':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.setCount(data.id,data.day,data.count));refreshReminders();sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'checkIn':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.checkIn(data.id,data.day,data.complete));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
-      case 'save':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.save(data.habits,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
+      case 'save':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.save(data.habits,true));refreshReminders();sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'loadMonths':return JSON.stringify(local.loadMonths());
       case 'saveMonths':{const data=JSON.parse(payload);manager.assertRevision(data.workspaceId,data.revision);manager.mutate(workspaceId,db=>db.savePlan(db.load(),data.months,true));sync.schedule(workspaceId);return JSON.stringify(manager.readActive().revision);}
       case 'restore':if(pomodoro.state.session&&pomodoro.state.workspaceId===workspaceId)throw Error('Finish the focus session before restoring a backup.');manager.mutate(workspaceId,db=>db.restore(JSON.parse(payload),true));sync.schedule(workspaceId);return JSON.stringify(local.loadMonths());
@@ -145,8 +172,16 @@ app.whenReady().then(async()=>{
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',(event,url)=>{if(!url.startsWith('trackverse://app/'))event.preventDefault();});
   win.once('ready-to-show',()=>win.show());
+  tray=new Tray(path.join(app.getAppPath(),'assets','trackverse.ico'));
+  tray.setToolTip('TrackVerse · Habit reminders');
+  tray.setContextMenu(Menu.buildFromTemplate([{label:'Open TrackVerse',click:showMainWindow},{type:'separator'},{label:'Quit TrackVerse (stops reminders)',click:()=>app.quit()}]));
+  tray.on('double-click',showMainWindow);
+  win.on('close',event=>{
+    if(!quitting&&hasReminders()){event.preventDefault();win.hide();timerWindow?.hide();}
+  });
   await win.loadURL('trackverse://app/');
+  reminders=new HabitReminders(manager,{notify:notifyHabit});reminders.start();
 }).catch(e=>{dialog.showErrorBox('TrackVerse could not start',String(e));app.quit();});
 app.on('window-all-closed',()=>app.quit());
-app.on('before-quit',()=>{if(pomodoro){pomodoro.checkpoint();pomodoro.state.running=false;pomodoro.persist();}});
-app.on('will-quit',()=>{clearInterval(connectionTimer);clearInterval(focusInterval);sync?.stop();auth?.cancel?.();manager?.close();});
+app.on('before-quit',()=>{quitting=true;reminders?.stop();if(pomodoro){pomodoro.checkpoint();pomodoro.state.running=false;pomodoro.persist();}});
+app.on('will-quit',()=>{clearInterval(connectionTimer);clearInterval(focusInterval);for(const notification of activeNotifications.values())notification.close();tray?.destroy();sync?.stop();auth?.cancel?.();manager?.close();});

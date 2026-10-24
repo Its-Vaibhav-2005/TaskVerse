@@ -1,7 +1,8 @@
 {
   "name": "trackverse",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
+  "license": "MIT",
   "description": "A private, productive habit tracker with native SQLite storage.",
   "author": "TrackVerse",
   "main": "desktop/main.cjs",
@@ -9,8 +10,10 @@
     "postinstall": "node node_modules/electron/install.js",
     "start": "electron .",
     "test:desktop": "node --test desktop/*.test.cjs",
-    "dist:win": "node tool/validate-release.cjs && electron-builder --win msi --x64 --publish never",
-    "pack:win": "electron-builder --win dir --x64"
+    "dist:win": "node tool/validate-signing.cjs && node tool/validate-release.cjs && electron-builder --config tool/windows-release.cjs --win msi --x64 --publish never",
+    "test:release": "node --test tool/windows-release.test.cjs",
+    "audit:release": "node tool/audit-release.cjs",
+    "pack:win": "node tool/validate-signing.cjs && electron-builder --config tool/windows-release.cjs --win dir --x64"
   },
   "devDependencies": {
     "electron": "45.0.0",
@@ -20,10 +23,15 @@
     "appId": "app.trackverse.desktop",
     "productName": "TrackVerse",
     "asar": true,
+    "forceCodeSigning": true,
     "extraResources": [
       {
         "from": ".config/google-client.json",
         "to": "google-client.json"
+      },
+      {
+        "from": "LICENSE",
+        "to": "TRACKVERSE-LICENSE.txt"
       }
     ],
     "directories": {
@@ -43,7 +51,11 @@
     "win": {
       "target": "msi",
       "icon": "assets/trackverse.ico",
-      "signExecutable": false
+      "signExecutable": true,
+      "signExts": [
+        ".dll",
+        ".node"
+      ]
     },
     "nsis": {
       "oneClick": false,
@@ -55,6 +67,7 @@
       "deleteAppDataOnUninstall": false
     },
     "msi": {
+      "upgradeCode": "F5E63BAD-FABA-5A01-85F8-71FEBD579F35",
       "oneClick": false,
       "perMachine": false,
       "runAfterFinish": false,

@@ -1,0 +1,13 @@
+{
+  "version": "1.1.0",
+  "productVersion": "1.1.0.0",
+  "productCode": "{BD3652BB-BE22-4B4D-B1B2-B5072A1DDAE2}",
+  "upgradeCode": "F5E63BAD-FABA-5A01-85F8-71FEBD579F35",
+  "appId": "app.trackverse.desktop",
+  "packageName": "trackverse",
+  "productName": "TrackVerse",
+  "manufacturer": "TrackVerse",
+  "perMachine": false,
+  "verifiedVersions": ["1.0.0", "1.1.0"],
+  "source": "Read from the released 1.0.0 and 1.1.0 MSI Property tables; both have the same UpgradeCode."
+}

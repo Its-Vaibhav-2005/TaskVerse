@@ -12,7 +12,7 @@ test('Native SQLite persists habits, completions and month tabs; invalid writes 
   db.save([habit]); db.saveMonths(['2026-10-01','2026-11-01']); db.setTheme('dark'); db.close();
   db=new TrackVerseDatabase(file);
   assert.equal(db.getTheme(),'dark');
-  assert.deepEqual(JSON.parse(JSON.stringify(db.load())),[habit]);
+  assert.deepEqual(JSON.parse(JSON.stringify(db.load())),[{...habit,dailyTarget:1,dailyCounts:{},reminder:null}]);
   assert.deepEqual(db.loadMonths(),['2026-10-01','2026-11-01']);
   assert.throws(()=>db.save([habit,habit]));
   assert.throws(()=>db.save([{...habit,checks:['invalid']} ]));

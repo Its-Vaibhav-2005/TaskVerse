@@ -18,6 +18,9 @@ google-tokens*
 *.sqlite-wal
 *.jks
 *.keystore
+*.pfx
+*.p12
+*.pvk
 key.properties
 dist/
 .local-data/

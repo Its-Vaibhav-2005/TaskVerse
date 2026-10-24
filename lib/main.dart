@@ -303,25 +303,100 @@ class _HomeState extends State<Home> {
       message('Only today can be changed. Previous days are locked.');
       return;
     }
-    final previous = habit.done(day);
+    final previous = habit.countOn(day);
+    var next = habit.done(day) ? 0 : 1;
+    if (habit.dailyTarget > 1) {
+      var value = previous.clamp(0, habit.dailyTarget);
+      final selected = await showDialog<int>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, update) => AlertDialog(
+            title: Text(habit.name),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Today’s progress'),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      tooltip: 'Remove one',
+                      onPressed: value > 0 ? () => update(() => value--) : null,
+                      icon: const Icon(Icons.remove_circle_outline),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        '$value / ${habit.dailyTarget}',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Add one',
+                      onPressed: value < habit.dailyTarget
+                          ? () => update(() => value++)
+                          : null,
+                      icon: const Icon(Icons.add_circle_outline),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  value >= habit.dailyTarget
+                      ? 'Daily target reached. Reminders stop for today.'
+                      : '${habit.dailyTarget - value} more to reach your daily target.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, value),
+                child: const Text('Save progress'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (selected == null || !mounted) return;
+      localClock.refresh();
+      if (busy ||
+          !canCheckIn(habit, day, DateTime.now()) ||
+          !habits.contains(habit)) {
+        return;
+      }
+      next = selected;
+    }
+    final previousDone = habit.done(day);
+    final previousStoredCount = habit.dailyCounts[dayKey(day)];
     setState(() {
       busy = true;
-      previous
-          ? habit.checks.remove(dayKey(day))
-          : habit.checks.add(dayKey(day));
+      habit.setCount(day, next);
     });
     try {
       if (isWindowsDesktop) {
-        await storage.setCheckIn(habit.id, dayKey(day), !previous);
+        await storage.setDailyCount(habit.id, dayKey(day), next);
       } else {
         await storage.save(habits);
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          previous
+          previousDone
               ? habit.checks.add(dayKey(day))
               : habit.checks.remove(dayKey(day));
+          if (previousStoredCount == null) {
+            habit.dailyCounts.remove(dayKey(day));
+          } else {
+            habit.dailyCounts[dayKey(day)] = previousStoredCount;
+          }
         });
         localClock.refresh();
         message(
@@ -2040,6 +2115,14 @@ class HabitDialog extends StatefulWidget {
 class _HabitDialogState extends State<HabitDialog> {
   bool allMonths = false;
   final form = GlobalKey<FormState>();
+  late final TextEditingController target = TextEditingController(
+    text: '${widget.existing?.dailyTarget ?? 1}',
+  );
+  late bool remindersEnabled = widget.existing?.reminder?['enabled'] == true;
+  late String reminderTime =
+      widget.existing?.reminder?['time'] as String? ?? '09:00';
+  late int reminderInterval =
+      widget.existing?.reminder?['interval'] as int? ?? 60;
   late final TextEditingController name = TextEditingController(
     text: widget.existing?.name,
   );
@@ -2052,6 +2135,7 @@ class _HabitDialogState extends State<HabitDialog> {
   @override
   void dispose() {
     name.dispose();
+    target.dispose();
     super.dispose();
   }
 
@@ -2101,6 +2185,94 @@ class _HabitDialogState extends State<HabitDialog> {
                     .toList(),
                 onChanged: (v) => setState(() => category = v!),
               ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: target,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: const InputDecoration(
+                  labelText: 'Daily target',
+                  suffixText: 'times / day',
+                  helperText: 'Complete this many times to finish the day.',
+                ),
+                validator: (v) {
+                  final number = int.tryParse(v ?? '');
+                  return number == null || number < 1 || number > 99
+                      ? 'Choose a target from 1 to 99.'
+                      : null;
+                },
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Remind me'),
+                subtitle: const Text(
+                  'Repeat until today’s target is complete.',
+                ),
+                value: remindersEnabled,
+                onChanged: (value) => setState(() => remindersEnabled = value),
+              ),
+              if (remindersEnabled) ...[
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.schedule_outlined),
+                  title: const Text('First reminder'),
+                  subtitle: Text(
+                    TimeOfDay(
+                      hour: int.parse(reminderTime.split(':')[0]),
+                      minute: int.parse(reminderTime.split(':')[1]),
+                    ).format(context),
+                  ),
+                  trailing: TextButton(
+                    onPressed: () async {
+                      final parts = reminderTime.split(':');
+                      final selected = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(
+                          hour: int.parse(parts[0]),
+                          minute: int.parse(parts[1]),
+                        ),
+                      );
+                      if (selected != null && mounted) {
+                        setState(
+                          () => reminderTime =
+                              '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}',
+                        );
+                      }
+                    },
+                    child: const Text('Change'),
+                  ),
+                ),
+                DropdownButtonFormField<int>(
+                  initialValue: reminderInterval,
+                  decoration: const InputDecoration(labelText: 'Repeat every'),
+                  items:
+                      ({5, 15, 30, 60, 120, 180, 240, reminderInterval}.toList()
+                            ..sort())
+                          .map(
+                            (minutes) => DropdownMenuItem(
+                              value: minutes,
+                              child: Text(
+                                minutes < 60
+                                    ? '$minutes minutes'
+                                    : minutes % 60 == 0
+                                    ? '${minutes ~/ 60} hour${minutes == 60 ? '' : 's'}'
+                                    : '$minutes minutes',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) =>
+                      setState(() => reminderInterval = value!),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  isWindowsDesktop
+                      ? 'On scheduled days, reminders repeat until you finish or the day ends. Closing the window keeps TrackVerse in the tray. Quit stops reminders; open TrackVerse again after restarting Windows. Windows notification settings apply.'
+                      : 'Windows desktop notifications are available in the installed app while TrackVerse is running. This preview saves your reminder settings.',
+                  style: const TextStyle(fontSize: 12, color: muted),
+                ),
+              ],
               const SizedBox(height: 22),
               if (widget.existing == null) ...[
                 Text(
@@ -2223,26 +2395,34 @@ class _HabitDialogState extends State<HabitDialog> {
       FilledButton(
         onPressed: () {
           if (form.currentState!.validate() && weekdays.isNotEmpty) {
-            Navigator.pop(
-              context,
-              Habit(
-                id:
-                    widget.existing?.id ??
-                    DateTime.now().microsecondsSinceEpoch.toString(),
-                name: name.text.trim(),
-                category: category,
-                color: color,
-                icon: icon,
-                created: widget.existing?.created ?? widget.now,
-                weekdays: weekdays,
-                checks: widget.existing?.checks,
-                months: widget.existing != null
-                    ? widget.existing!.months
-                    : (allMonths
-                          ? widget.monthTabs.map(monthKey).toSet()
-                          : {monthKey(widget.month ?? widget.now)}),
-              ),
+            final habit = Habit(
+              id:
+                  widget.existing?.id ??
+                  DateTime.now().microsecondsSinceEpoch.toString(),
+              name: name.text.trim(),
+              category: category,
+              color: color,
+              icon: icon,
+              created: widget.existing?.created ?? widget.now,
+              weekdays: weekdays,
+              checks: {...?widget.existing?.checks},
+              dailyTarget: int.parse(target.text),
+              dailyCounts: {...?widget.existing?.dailyCounts},
+              reminder: {
+                'enabled': remindersEnabled,
+                'time': reminderTime,
+                'interval': reminderInterval,
+              },
+              months: widget.existing != null
+                  ? widget.existing!.months
+                  : (allMonths
+                        ? widget.monthTabs.map(monthKey).toSet()
+                        : {monthKey(widget.month ?? widget.now)}),
             );
+            if (widget.existing != null && habit.scheduled(widget.now)) {
+              habit.setCount(widget.now, widget.existing!.countOn(widget.now));
+            }
+            Navigator.pop(context, habit);
           }
         },
         child: Text(widget.existing == null ? 'Create habit' : 'Save changes'),

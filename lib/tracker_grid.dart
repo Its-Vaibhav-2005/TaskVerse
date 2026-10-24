@@ -142,7 +142,7 @@ class _TrackerGridState extends State<TrackerGrid> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                h.category,
+                                '${h.category}${h.dailyTarget > 1 ? ' · ${h.dailyTarget}× daily' : ''}${h.reminder?['enabled'] == true ? ' · Reminder on' : ''}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -417,11 +417,12 @@ class _TrackerGridState extends State<TrackerGrid> {
         right: (i + 1) % 7 == 0 || i == length - 1,
       ),
       child: Semantics(
-        label: '${h.name}, ${dayKey(d)}, ${done ? 'completed' : 'incomplete'}',
+        label:
+            '${h.name}, ${dayKey(d)}, ${h.countOn(d)} of ${h.dailyTarget}, ${done ? 'completed' : 'incomplete'}',
         button: enabled,
         child: Tooltip(
           message:
-              '${h.name} · ${dayKey(d)}${enabled
+              '${h.name}${h.dailyTarget > 1 ? ' · ${h.countOn(d)}/${h.dailyTarget}' : ''} · ${dayKey(d)}${enabled
                   ? ''
                   : d.isBefore(widget.now)
                   ? ' · Past day · locked'
@@ -442,7 +443,19 @@ class _TrackerGridState extends State<TrackerGrid> {
                     ? () => widget.onToggle(h, d)
                     : null,
                 child: Center(
-                  child: done
+                  child:
+                      h.dailyTarget > 1 &&
+                          h.scheduled(d) &&
+                          !d.isAfter(widget.now)
+                      ? Text(
+                          '${h.countOn(d)}/${h.dailyTarget}',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: done ? Colors.white : color,
+                          ),
+                        )
+                      : done
                       ? Icon(Icons.check_rounded, size: 16, color: Colors.white)
                       : !h.scheduled(d) || d.isAfter(widget.now)
                       ? Text(
