@@ -4,9 +4,9 @@
 
 TrackVerse is a local-first Windows habit tracker with a spreadsheet-style workspace, habit-linked Pomodoro timer, automatic progress dashboards, and optional Google Sheets backup. Your everyday work is saved in native SQLite, including when you are offline.
 
-**Current release: 1.1.0 · Windows x64**
+**Current release: 1.2.0 · Windows x64 · unsigned**
 
-**Next version: 1.2.0 · prepared locally; signed Windows installer pending.**
+**Trusted signing is pending. Smart App Control may still block this application.**
 
 [Download Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
 
@@ -28,6 +28,7 @@ TrackVerse is a local-first Windows habit tracker with a spreadsheet-style works
 | --- | --- |
 | Spreadsheet-style habit tracker | Check off today's habits in a clean grid with pinned habit names, colored week bands, daily completion bars, search, and category filters. |
 | Flexible schedules | Choose repeat weekdays, a category, an icon, a color, and which month tabs contain a habit. |
+| Daily targets and reminders | Set a target from 1–99, record partial progress, and edit reminder times and repeat intervals. |
 | Monthly workspaces | Create tabs such as **Oct 2026**, reuse the previous plan or start fresh, and remove future months. |
 | Automatic progress | See completion rate, total check-ins, current streaks, active habits, weekly summaries, and a consistency curve. |
 | Habit-linked Pomodoro | Customize work and break durations; start, pause, resume, and save time against a specific habit. |
@@ -42,25 +43,25 @@ TrackVerse is a local-first Windows habit tracker with a spreadsheet-style works
 | Portable backups | Export and restore habits, monthly plans, check-ins, and focus sessions as JSON. |
 | Organized Settings | Manage appearance, typography, trackers, backups, and daily behavior in responsive grouped cards. |
 
-### New in 1.1.0
+### New in 1.2.0
 
-This release adds the Pomodoro widget and focus-time Insights, 43 paired theme presets, System appearance, clearer light-mode text, neutral application branding, and redesigned Settings. It also improves timer window positioning, widget sizing, interrupted-session recovery, and larger-text layouts. See the [full changelog](CHANGELOG.md).
+This release adds daily habit counters, partial progress and correction controls, and editable reminders that repeat until the daily target is complete. Reminders can continue through the system tray. Existing habits default to one completion per day and retain their history. See the [full changelog](CHANGELOG.md).
 
 ## Install and get started
 
 1. Download the Windows x64 MSI and checksum from [Releases](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest).
 2. Run the installer and open TrackVerse from the Start menu or desktop shortcut.
 3. Choose **Setup Locally** for SQLite-only use, or **Continue with Google** for SQLite plus optional cloud backup.
-4. Click **New habit**, enter a name, select its schedule and appearance, then create it.
-5. Click today's scheduled cell to complete the habit. Click it again today to undo.
+4. Click **New habit**, enter a name, select its schedule, appearance, daily target, and optional reminder settings, then create it.
+5. Click today's scheduled cell to record progress; use the count controls for habits with a daily target above one.
 6. Use the month-bar **+** to plan another month, or open **Widgets → Pomodoro** to focus on a habit.
 
-New installations start without sample habits or personal account credentials. The original 1.1.0 MSI is unsigned and can be blocked by Smart App Control. Keep Windows protection enabled; use a verified signed replacement release when available. For upgrades, export a backup first, close TrackVerse, and install the newer release. User data is stored separately from the installation files.
+New installations start without sample habits or personal account credentials. The 1.2.0 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled; use a verified signed replacement release when available. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
 
 To verify the installer, compare this PowerShell result with the checksum supplied alongside your download:
 
 ```powershell
-Get-FileHash .\TrackVerse-Setup-1.1.0-x64.msi -Algorithm SHA256
+Get-FileHash .\TrackVerse-Setup-1.2.0-x64.msi -Algorithm SHA256
 ```
 
 ### Watch the walkthrough
@@ -275,9 +276,9 @@ Read the [privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.h
 
 ### Release validation
 
-Version 1.1.0 passed **25 native desktop tests and 19 Flutter tests**, with a clean Flutter analyzer and no known production dependency vulnerabilities reported by the build-time audit. Packaged startup was checked with an empty profile and no personal tokens.
+Version 1.2.0 passed **29 desktop tests, 21 Flutter tests, and 6 release-policy tests**, with a clean Flutter analyzer and a successful web build. Local package inspection verified versions, required feature files, the license, the existing MSI upgrade identity, and exclusion of personal databases and token files.
 
-The original 1.1.0 installer is unsigned. New release builds require signing and a Windows signature audit; see [Windows signing setup](docs/windows-signing.md). WiX ICE validation is disabled in this build environment because the host's Windows Installer policy blocks it; system policy was not changed. Archive inspection and checksum generation are performed separately. Clean-machine installation/uninstallation testing remains recommended before wider deployment; these checks are not a security certification.
+The 1.2.0 installer is distributed unsigned at the maintainer's request. Normal release builds require signing and a Windows signature audit; see [Windows signing setup](docs/windows-signing.md). The attached limited verification report is not a successful trusted-signature audit. Microsoft review and SignPath approval remain pending. WiX ICE validation is disabled because the build host policy blocks it; system policy was not changed. Clean-machine installation, upgrade, and Smart App Control acceptance remain unverified. These checks are not a security certification.
 
 ## Development and packaging
 
