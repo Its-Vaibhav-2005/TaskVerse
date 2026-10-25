@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.3.0 — 2026-10-25
+
+Minor feature update from 1.2.1 (Flutter build 5), following Major.Minor.Micro.
+
+### Fixed and improved
+- Removed the oversized blank sheet preview from tracker settings; tracker cards
+  stay compact and long lists load as they are scrolled.
+- Creating a tracker now returns promptly while its first backup sync runs in the
+  background. Cloud actions show progress instead of appearing frozen.
+- Serialized rapid typography changes and applied selected fonts consistently
+  across controls, with a clearer size readout and live preview.
+- Added privacy-policy and support links to Settings.
+- Bounded Google credential refreshes so stalled requests report an error and
+  preserve local data.
+
+### Distribution
+- Windows x64 MSI, compatible in-place upgrade identity retained.
+- Added a separate unsigned MSI build and audit command; signed release builds
+  continue to require a configured signing identity.
+- This MSI is unsigned because no signing certificate is configured on the
+  release host. Keep Windows security protections enabled; Smart App Control may
+  block it. Trusted signing remains pending.
+
 ## 1.2.1 — 2026-10-24
 
 ### Fixed

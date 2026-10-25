@@ -110,7 +110,7 @@ class _HomeState extends State<Home> {
   final searchController = TextEditingController();
   Map<String, dynamic> cloud = {};
   bool cloudBusy = false, needsWelcome = false, refreshingCloud = false;
-  String? cloudError;
+  String? cloudError, cloudProgress;
   Timer? cloudPoll;
   List<Map<String, dynamic>> get profiles => (cloud['profiles'] as List? ?? [])
       .map((p) => Map<String, dynamic>.from(p))
@@ -144,7 +144,9 @@ class _HomeState extends State<Home> {
           jsonDecode(await desktopRequest('cloudState'))
               as Map<String, dynamic>;
       if (!mounted) return;
-      setState(() => cloud = next);
+      if (jsonEncode(cloud) != jsonEncode(next)) {
+        setState(() => cloud = next);
+      }
       final selected = activeProfile;
       if (ModalRoute.of(context)?.isCurrent == true &&
           (next['activeId'] != storage.desktopWorkspaceId ||
@@ -168,8 +170,19 @@ class _HomeState extends State<Home> {
       cloudBusy = true;
       busy = true;
       cloudError = null;
+      cloudProgress = switch (operation) {
+        'createTracker' =>
+          'Creating your tracker… Backup will continue in the background.',
+        'deleteTracker' =>
+          'Moving the sheet to Trash and archiving this tracker…',
+        'discoverTrackers' => 'Finding your trackers…',
+        'syncTracker' => 'Scheduling your backup…',
+        _ => 'Updating trackers…',
+      };
     });
     try {
+      // Paint feedback before starting IPC or any subsequent local work.
+      await WidgetsBinding.instance.endOfFrame;
       await desktopRequest(operation, payload);
       final next =
           jsonDecode(await desktopRequest('cloudState'))
@@ -199,6 +212,7 @@ class _HomeState extends State<Home> {
         setState(() {
           cloudBusy = false;
           busy = false;
+          cloudProgress = null;
         });
       }
     }
@@ -807,6 +821,12 @@ class _HomeState extends State<Home> {
                     child: Column(
                       children: [
                         topbar(desktop),
+                        if (cloudBusy)
+                          Semantics(
+                            liveRegion: true,
+                            label: cloudProgress ?? 'Updating trackers',
+                            child: const LinearProgressIndicator(minHeight: 2),
+                          ),
                         Expanded(
                           child: loading
                               ? Center(child: CircularProgressIndicator())
@@ -2005,6 +2025,7 @@ class _HomeState extends State<Home> {
         ? CloudPanel(
             state: cloud,
             busy: cloudBusy,
+            progress: cloudProgress,
             action: cloudAction,
             onCreate: createTracker,
             onRename: renameTracker,

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'appearance.dart';
 import 'theme_gallery.dart';
+import 'desktop_bridge.dart';
+
+const supportEmail = 'vaibhavpandey.cs31@gmail.com';
 
 class SettingsPage extends StatelessWidget {
   final Widget? cloudPanel;
@@ -34,6 +37,20 @@ class SettingsPage extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Could not save typography. Please try again.'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> openLink(BuildContext context, String operation) async {
+    try {
+      await openAppLink(operation);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open the link. Please try again.'),
           ),
         );
       }
@@ -312,9 +329,11 @@ class SettingsPage extends StatelessWidget {
                           icon: const Icon(Icons.text_decrease, size: 18),
                         ),
                         SizedBox(
-                          width: 34,
+                          width: 58,
                           child: Text(
-                            '${appearance.fontStep >= 0 ? '+' : ''}${appearance.fontStep}',
+                            appearance.fontStep == 0
+                                ? 'Default'
+                                : '${appearance.fontStep > 0 ? '+' : ''}${appearance.fontStep} px',
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
@@ -332,7 +351,7 @@ class SettingsPage extends StatelessWidget {
                   TextButton(
                     onPressed: () =>
                         typography(context, family: 'Inter', step: 0),
-                    child: const Text('Reset fonts'),
+                    child: const Text('Reset typography'),
                   ),
                 ],
               ),
@@ -359,7 +378,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Live type preview · Bundled fonts work offline',
+                  '${appearance.fontFamily} · Live preview · Available offline',
                   style: TextStyle(color: c.muted, fontSize: 10),
                 ),
               ],
@@ -404,6 +423,24 @@ class SettingsPage extends StatelessWidget {
             'Keep a portable copy of your habits, month tabs, and focus sessions.',
             style: TextStyle(color: c.muted, fontSize: 11, height: 1.6),
           ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton.icon(
+                onPressed: () => openLink(context, 'openPrivacyPolicy'),
+                icon: const Icon(Icons.open_in_new, size: 15),
+                label: const Text('Privacy policy'),
+              ),
+              TextButton.icon(
+                onPressed: () => openLink(context, 'contactSupport'),
+                icon: const Icon(Icons.mail_outline, size: 15),
+                label: const Text('Contact support'),
+              ),
+            ],
+          ),
+          Text(supportEmail, style: TextStyle(color: c.muted, fontSize: 11)),
         ],
       ),
     );
@@ -606,7 +643,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'TrackVerse 1.2.1',
+                  'TrackVerse 1.3.0',
                   style: TextStyle(color: c.muted, fontSize: 10),
                 ),
               ],

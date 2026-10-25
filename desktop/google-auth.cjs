@@ -95,8 +95,10 @@ class GoogleAuth {
   }
   async token() {
     if(!this.status().connected)throw Error('Sign in with Google to sync your trackers.');
-    try {const {token}=await this.client.getAccessToken();if(!token)throw Error();return token;}
+    let timeout;
+    try {const {token}=await Promise.race([this.client.getAccessToken(),new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Token refresh timed out')),15000);})]);if(!token)throw Error();return token;}
     catch(_){throw Error('Google access expired. Reconnect your Google account; local data is safe.');}
+    finally {clearTimeout(timeout);}
   }
   signOut() {this.cancel?.();if(this.client)this.client.setCredentials({});this.identity=null;const file=path.join(this.directory,'google-tokens.enc');if(fs.existsSync(file))fs.unlinkSync(file);}
 }

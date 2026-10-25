@@ -196,6 +196,7 @@ class CloudPanel extends StatelessWidget {
   final Map<String, dynamic> state;
   final bool busy;
   final bool embedded;
+  final String? progress;
   final Future<void> Function(String, String, bool) action;
   final VoidCallback onCreate;
   final void Function(Map<String, dynamic>) onRename;
@@ -207,6 +208,7 @@ class CloudPanel extends StatelessWidget {
     required this.onCreate,
     required this.onRename,
     this.embedded = false,
+    this.progress,
   });
   @override
   Widget build(BuildContext context) {
@@ -217,6 +219,164 @@ class CloudPanel extends StatelessWidget {
         .map((p) => Map<String, dynamic>.from(p))
         .toList();
     final identity = state['identity'] as Map?;
+    Widget profileCard(Map<String, dynamic> p) {
+      final selected = p['id'] == state['activeId'];
+      final remote = p['sheet_id'] != null;
+      final conflict = p['status'] == 'conflict';
+      return Container(
+        key: ValueKey('tracker-card-${p['id']}'),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: selected ? c.raised : c.surface,
+          border: Border.all(
+            color: selected ? c.accent.withValues(alpha: .45) : c.border,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  remote ? Icons.cloud_done_outlined : Icons.storage_outlined,
+                  color: c.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        p['alias'] as String,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        syncLabel(p),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: conflict
+                              ? Theme.of(context).colorScheme.error
+                              : c.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (selected)
+                  Text(
+                    'ACTIVE',
+                    style: TextStyle(
+                      color: c.accent,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                IconButton(
+                  tooltip: 'Rename tracker',
+                  onPressed: busy ? null : () => onRename(p),
+                  icon: Icon(Icons.edit_outlined, size: 17, color: c.muted),
+                ),
+              ],
+            ),
+            if (remote) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Google Sheets backup',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: c.accent, fontSize: 11),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${p['sharing'] ?? 'Private · Google account only'}${p['lastSync'] != null ? ' · Last checked ${_time(p['lastSync'] as String)}' : ''}',
+                style: TextStyle(color: c.muted, fontSize: 10),
+              ),
+              if (p['error'] != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  p['error'] as String,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 11,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ],
+            if (!selected || remote || conflict) const SizedBox(height: 12),
+            if (!selected || remote || conflict)
+              Wrap(
+                spacing: 9,
+                runSpacing: 8,
+                children: [
+                  if (!selected)
+                    OutlinedButton(
+                      onPressed: busy
+                          ? null
+                          : () => action(
+                              'switchTracker',
+                              p['id'] as String,
+                              true,
+                            ),
+                      child: const Text('Switch tracker'),
+                    ),
+                  if (remote) ...[
+                    TextButton.icon(
+                      onPressed: busy || !connected || state['online'] == false
+                          ? null
+                          : () => _delete(context, p),
+                      icon: const Icon(Icons.delete_outline, size: 15),
+                      label: const Text('Delete tracker & sheet'),
+                    ),
+                    TextButton.icon(
+                      onPressed: busy
+                          ? null
+                          : () => action(
+                              'openTrackerSheet',
+                              p['id'] as String,
+                              false,
+                            ),
+                      icon: const Icon(Icons.open_in_new, size: 14),
+                      label: const Text('Open sheet'),
+                    ),
+                    TextButton.icon(
+                      onPressed: busy || !connected
+                          ? null
+                          : () => action(
+                              'syncTracker',
+                              '{"id":"${p['id']}"}',
+                              true,
+                            ),
+                      icon: const Icon(Icons.sync, size: 15),
+                      label: const Text('Sync now'),
+                    ),
+                  ],
+                  if (conflict) ...[
+                    TextButton(
+                      onPressed: busy
+                          ? null
+                          : () => _resolve(context, p, 'remote'),
+                      child: const Text('Use sheet version'),
+                    ),
+                    TextButton(
+                      onPressed: busy
+                          ? null
+                          : () => _resolve(context, p, 'local'),
+                      child: const Text('Keep this device’s version'),
+                    ),
+                  ],
+                ],
+              ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(embedded ? 0 : 24),
@@ -255,6 +415,15 @@ class CloudPanel extends StatelessWidget {
             style: TextStyle(color: c.muted, fontSize: 12, height: 1.7),
           ),
           const SizedBox(height: 18),
+          if (busy) ...[
+            const LinearProgressIndicator(minHeight: 2),
+            const SizedBox(height: 10),
+            Text(
+              progress ?? 'Updating trackers…',
+              style: TextStyle(color: c.muted, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+          ],
           Wrap(
             spacing: 10,
             runSpacing: 10,
@@ -290,170 +459,17 @@ class CloudPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 22),
-          ...profiles.map((p) {
-            final selected = p['id'] == state['activeId'];
-            final remote = p['sheet_id'] != null;
-            final conflict = p['status'] == 'conflict';
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: selected ? c.raised : c.surface,
-                border: Border.all(
-                  color: selected ? c.accent.withValues(alpha: .45) : c.border,
-                ),
-                borderRadius: BorderRadius.circular(10),
+          if (profiles.length <= 4)
+            ...profiles.map(profileCard)
+          else
+            SizedBox(
+              height: 480,
+              child: ListView.builder(
+                primary: false,
+                itemCount: profiles.length,
+                itemBuilder: (_, index) => profileCard(profiles[index]),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        remote
-                            ? Icons.cloud_done_outlined
-                            : Icons.storage_outlined,
-                        color: c.accent,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 11),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p['alias'] as String,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              syncLabel(p),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: conflict
-                                    ? Theme.of(context).colorScheme.error
-                                    : c.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (selected)
-                        Text(
-                          'ACTIVE',
-                          style: TextStyle(
-                            color: c.accent,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      IconButton(
-                        tooltip: 'Rename tracker',
-                        onPressed: busy ? null : () => onRename(p),
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          size: 17,
-                          color: c.muted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (remote) ...[
-                    const SizedBox(height: 12),
-                    SelectableText(
-                      p['url'] as String,
-                      style: TextStyle(color: c.accent, fontSize: 11),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${p['sharing'] ?? 'Private · Google account only'}${p['lastSync'] != null ? ' · Last checked ${_time(p['lastSync'] as String)}' : ''}',
-                      style: TextStyle(color: c.muted, fontSize: 10),
-                    ),
-                    if (p['error'] != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        p['error'] as String,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                          fontSize: 11,
-                          height: 1.6,
-                        ),
-                      ),
-                    ],
-                  ],
-                  if (!selected || remote || conflict)
-                    const SizedBox(height: 12),
-                  if (!selected || remote || conflict)
-                    Wrap(
-                      spacing: 9,
-                      runSpacing: 8,
-                      children: [
-                        if (!selected)
-                          OutlinedButton(
-                            onPressed: busy
-                                ? null
-                                : () => action(
-                                    'switchTracker',
-                                    p['id'] as String,
-                                    true,
-                                  ),
-                            child: const Text('Switch tracker'),
-                          ),
-                        if (remote) ...[
-                          TextButton.icon(
-                            onPressed:
-                                busy || !connected || state['online'] == false
-                                ? null
-                                : () => _delete(context, p),
-                            icon: const Icon(Icons.delete_outline, size: 15),
-                            label: const Text('Delete tracker & sheet'),
-                          ),
-                          TextButton.icon(
-                            onPressed: busy
-                                ? null
-                                : () => action(
-                                    'openTrackerSheet',
-                                    p['id'] as String,
-                                    false,
-                                  ),
-                            icon: const Icon(Icons.open_in_new, size: 14),
-                            label: const Text('Open sheet'),
-                          ),
-                          TextButton.icon(
-                            onPressed: busy || !connected
-                                ? null
-                                : () => action(
-                                    'syncTracker',
-                                    '{"id":"${p['id']}"}',
-                                    true,
-                                  ),
-                            icon: const Icon(Icons.sync, size: 15),
-                            label: const Text('Sync now'),
-                          ),
-                        ],
-                        if (conflict) ...[
-                          TextButton(
-                            onPressed: busy
-                                ? null
-                                : () => _resolve(context, p, 'remote'),
-                            child: const Text('Use sheet version'),
-                          ),
-                          TextButton(
-                            onPressed: busy
-                                ? null
-                                : () => _resolve(context, p, 'local'),
-                            child: const Text('Keep this device’s version'),
-                          ),
-                        ],
-                      ],
-                    ),
-                ],
-              ),
-            );
-          }),
+            ),
           Text(
             'Google sign-in creates and finds your backup sheets automatically. No links to paste. Only changes that have finished syncing can be recovered after uninstalling.',
             style: TextStyle(color: c.muted, fontSize: 11, height: 1.7),
@@ -490,6 +506,7 @@ class CloudPanel extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: Text('Delete ${p['alias']}?'),
         content: const Text(
           'Move this Google spreadsheet to Drive’s Trash and remove its tracker from the app? A local recovery archive will be kept. Other trackers are unaffected. You can restore the sheet from Drive’s Trash, then use Find my trackers.',

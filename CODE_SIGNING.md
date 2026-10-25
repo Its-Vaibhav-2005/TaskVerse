@@ -2,10 +2,11 @@
 
 ## Current status
 
-TrackVerse's Windows installers through 1.2.1 are unsigned. The free
+TrackVerse's Windows installers through 1.3.0 are unsigned. The free
 SignPath Foundation application was submitted on 2026-10-24; approval and
 Electron artifact coverage remain pending. No SignPath signature has been issued.
-Version 1.2.1 is distributed unsigned at the maintainer's request and may still
+Version 1.3.0 is distributed unsigned because signing credentials are not
+configured on the build host and may still
 be blocked by Smart App Control. Microsoft file-review submissions are not
 code-signing approval or a guarantee that Windows will allow execution.
 

@@ -38,25 +38,35 @@ class Appearance extends ChangeNotifier {
   int fontStep = 0;
   String fontFamily = 'Inter';
   static const fonts = ['Inter', 'Lora', 'JetBrains Mono'];
+  int _typographyRevision = 0;
+  Future<void> _typographySave = Future.value();
   Future<void> setTypography({int? step, String? family}) async {
     final oldStep = fontStep, oldFont = fontFamily;
+    final revision = ++_typographyRevision;
     fontStep = (step ?? fontStep).clamp(-2, 4);
     fontFamily = fonts.contains(family) ? family! : fontFamily;
+    final value = jsonEncode({'step': fontStep, 'family': fontFamily});
     notifyListeners();
     try {
-      final value = jsonEncode({'step': fontStep, 'family': fontFamily});
-      if (isWindowsDesktop) {
-        await desktopRequest('setTypography', value);
-      } else {
-        await (await SharedPreferences.getInstance()).setString(
+      // Keep rapid adjustments responsive while persisting in order.
+      final save = _typographySave.then((_) async {
+        if (isWindowsDesktop) {
+          await desktopRequest('setTypography', value);
+        } else if (!await (await SharedPreferences.getInstance()).setString(
           'typography',
           value,
-        );
-      }
+        )) {
+          throw StateError('Could not save typography');
+        }
+      });
+      _typographySave = save.catchError((_) {});
+      await save;
     } catch (_) {
-      fontStep = oldStep;
-      fontFamily = oldFont;
-      notifyListeners();
+      if (revision == _typographyRevision) {
+        fontStep = oldStep;
+        fontFamily = oldFont;
+        notifyListeners();
+      }
       rethrow;
     }
   }
@@ -173,19 +183,30 @@ ThemeData trackVerseTheme(Brightness brightness) {
         borderRadius: BorderRadius.circular(10),
         side: BorderSide(color: border),
       ),
-      textStyle: TextStyle(color: scheme.onSurface, fontSize: 13),
+      textStyle: TextStyle(
+        color: scheme.onSurface,
+        fontSize: 13,
+        fontFamily: appearance.fontFamily,
+      ),
     ),
     tooltipTheme: TooltipThemeData(
       decoration: BoxDecoration(
         color: p['text'],
         borderRadius: BorderRadius.circular(6),
       ),
-      textStyle: TextStyle(color: p['surface'], fontSize: 11),
+      textStyle: TextStyle(
+        color: p['surface'],
+        fontSize: 11,
+        fontFamily: appearance.fontFamily,
+      ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: scheme.surface,
       selectedColor: p['selected'],
-      labelStyle: TextStyle(color: scheme.onSurface),
+      labelStyle: TextStyle(
+        color: scheme.onSurface,
+        fontFamily: appearance.fontFamily,
+      ),
       side: BorderSide(color: border),
     ),
     filledButtonTheme: FilledButtonThemeData(

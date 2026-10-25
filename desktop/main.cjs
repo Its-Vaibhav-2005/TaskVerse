@@ -55,7 +55,7 @@ async function createTracker(alias,copyCurrent) {
   validateAlias(alias);
   const file=await sheets.createTracker(alias);
   const id=manager.add({...file,account:auth.identity.id},copyCurrent);
-  await sync.sync(id,{force:true}).catch(()=>{});
+  sync.schedule(id);
   manager.activate(id);return cloudState();
 }
 app.on('second-instance',showMainWindow);
@@ -133,7 +133,9 @@ app.whenReady().then(async()=>{
       }
       case 'switchTracker':manager.activate(payload);sync.schedule(payload);return JSON.stringify(cloudState());
       case 'renameTracker':{const data=JSON.parse(payload);manager.rename(data.id,data.alias);manager.mutate(data.id,()=>{});sync.schedule(data.id);return JSON.stringify(cloudState());}
-      case 'syncTracker':{const data=JSON.parse(payload||'{}');await sync.sync(data.id||workspaceId,{force:true,resolve:data.resolve});return JSON.stringify(cloudState());}
+      case 'syncTracker':{const data=JSON.parse(payload||'{}');if(data.resolve)await sync.sync(data.id||workspaceId,{force:true,resolve:data.resolve});else sync.sync(data.id||workspaceId,{force:true}).catch(()=>{});return JSON.stringify(cloudState());}
+      case 'openPrivacyPolicy':await shell.openExternal('https://its-vaibhav-2005.github.io/TaskVerse/privacy.html');return '{}';
+      case 'contactSupport':await shell.openExternal('mailto:vaibhavpandey.cs31@gmail.com');return '{}';
       case 'openTrackerSheet':{const p=manager.profile(payload||workspaceId);if(p?.sheet_id)await shell.openExternal(`https://docs.google.com/spreadsheets/d/${p.sheet_id}/edit`);return '{}';}
       case 'load':return JSON.stringify(manager.readActive());
       case 'getTheme':return store.getTheme();
