@@ -6,7 +6,7 @@ Publish only the website folder to a public repository. Do not upload the full d
 
 ## Product video
 
-The homepage plays `media/TrackVerse-Cinematic-1080p.mp4` (3:25, 1920 × 1080, 30 FPS). The approved video was copied from the local `dist/media` release assets. Publish its matching `TrackVerse-Cinematic.vtt`, `.srt`, and `TrackVerse-Cinematic-Transcript.md`, along with `walkthrough-poster.png` and `walkthrough-preview.gif`. The README preview and homepage share these media assets. `walkthrough.js` connects the homepage chapter buttons to the video; update their times if the edit changes.
+The homepage plays `media/TrackVerse-Cinematic-1080p.mp4` (6:46, 1920 × 1080, 30 FPS, 32 embedded chapters). The video was exported from fresh captures of the running Windows app in an isolated demonstration profile on 25 October 2026, with neural English narration and an original synthesized soundtrack. Google-connected tools are explained with sign-in requirements; no user authentication or personal tracker data is shown. Publish its matching `TrackVerse-Cinematic.vtt`, `.srt`, and `TrackVerse-Cinematic-Transcript.md`, along with `walkthrough-poster.png` and `walkthrough-preview.gif`. The README preview and homepage share these media assets. `walkthrough.js` connects the homepage chapter buttons to the video; update their times if the edit changes.
 
 Pushes to `main` that change `website/**` trigger `.github/workflows/pages.yml`, which deploys this folder to GitHub Pages. Keep video files below GitHub's 100 MB per-file limit. The earlier quick-start assets remain available for existing direct links.
 

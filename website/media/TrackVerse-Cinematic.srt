@@ -1,211 +1,383 @@
 1
-00:00:00,650 --> 00:00:04,831
-Big changes start with small steps. Meet TrackVerse. Make room
+00:00:00,750 --> 00:00:06,250
+Small habits A little better every day Meet TrackVerse
 
 2
-00:00:04,831 --> 00:00:08,594
-for better habits, and see your progress take shape.
+00:00:08,817 --> 00:00:12,367
+TrackVerse brings your habits focus time and progress into one
 
 3
-00:00:10,417 --> 00:00:14,641
-When routines live in scattered notes, it is easy to
+00:00:12,279 --> 00:00:16,654
+calm workspace Built for Windows with your everyday work saved
 
 4
-00:00:14,641 --> 00:00:18,865
-lose the thread. TrackVerse brings your habits, monthly plans, and
+00:00:16,579 --> 00:00:17,167
+locally
 
 5
-00:00:18,865 --> 00:00:20,977
-focus time into one workspace.
+00:00:19,717 --> 00:00:22,242
+When routines are scattered it is hard to see what
 
 6
-00:00:22,783 --> 00:00:26,453
-On the desktop welcome screen, choose Set up locally to
+00:00:22,167 --> 00:00:26,392
+needs attention A monthly habit grid gives every small action
 
 7
-00:00:26,453 --> 00:00:30,123
-begin without an account. Your data is saved on this
+00:00:26,317 --> 00:00:26,954
+a place
 
 8
-00:00:30,123 --> 00:00:33,792
-device in SQLite. Google sign in is available for optional
+00:00:29,483 --> 00:00:32,821
+Plan your month check in today and review your consistency
 
 9
-00:00:33,792 --> 00:00:34,159
-backup.
+00:00:33,608 --> 00:00:36,508
+Then use a habit-linked timer to make space for focused
 
 10
-00:00:35,983 --> 00:00:39,791
-Start with one achievable action. In the habit tracker, choose
+00:00:36,433 --> 00:00:36,871
+work
 
 11
-00:00:39,791 --> 00:00:43,598
-New habit. Give it a specific name, such as Read
+00:00:39,417 --> 00:00:43,167
+Start at the welcome screen Choose Set up locally to
 
 12
-00:00:43,598 --> 00:00:44,359
-twenty pages.
+00:00:43,092 --> 00:00:47,717
+use the native SQLite database without an account Google backup
 
 13
-00:00:46,183 --> 00:00:49,835
-Choose a category, select the weekdays you want to repeat,
+00:00:47,642 --> 00:00:49,954
+is optional and can be connected later
 
 14
-00:00:49,835 --> 00:00:53,486
-and pick a color and icon. Choose this month only,
+00:00:52,517 --> 00:00:57,267
+In Overview select New habit Begin with something specific and
 
 15
-00:00:53,486 --> 00:00:56,407
-or all existing months. Then select Create habit.
+00:00:57,192 --> 00:01:00,567
+achievable such as drinking water or reading twenty pages
 
 16
-00:00:58,217 --> 00:01:02,147
-Find your habit row and today’s highlighted column. Click the
+00:01:03,150 --> 00:01:07,000
+Give the habit a name and category Choose the weekdays
 
 17
-00:01:02,147 --> 00:01:06,077
-scheduled cell to mark it complete. The check appears, and
+00:01:06,925 --> 00:01:09,625
+you want to repeat then select a color and icon
 
 18
-00:01:06,077 --> 00:01:07,649
-your progress updates automatically.
+00:01:10,413 --> 00:01:13,012
+Add it to this month or all existing months
 
 19
-00:01:09,450 --> 00:01:12,647
-You can click again today to undo. Past and future
+00:01:15,550 --> 00:01:20,250
+For repeated actions set a daily target Here water has
 
 20
-00:01:12,647 --> 00:01:15,844
-dates stay locked, and only scheduled days can be checked.
+00:01:20,175 --> 00:01:23,688
+a target of eight Turn on Remind me choose the
 
 21
-00:01:15,844 --> 00:01:18,402
-Focus on the action you can take today.
+00:01:23,600 --> 00:01:26,200
+first reminder and set how often it repeats
 
 22
-00:01:20,217 --> 00:01:23,568
-To plan ahead, select the plus beside your month tabs.
+00:01:28,750 --> 00:01:32,238
+On Windows reminders repeat on scheduled days until the target
 
 23
-00:01:23,568 --> 00:01:26,920
-Choose the month and year, then Add month. You can
+00:01:32,150 --> 00:01:36,400
+is complete or the day ends Keep TrackVerse running including
 
 24
-00:01:26,920 --> 00:01:29,937
-reuse your habits or start a fresh monthly plan.
+00:01:36,313 --> 00:01:40,388
+in the tray Windows notification settings still apply
 
 25
-00:01:31,750 --> 00:01:36,206
-The dashboard shows completion rate, total check ins, your best
+00:01:42,950 --> 00:01:47,013
+Select Create habit Your habit appears in the month grid
 
 26
-00:01:36,206 --> 00:01:40,662
-current streak, and active habits. Here, one scheduled action is
+00:01:47,138 --> 00:01:51,438
+with today highlighted Only today’s scheduled cells can be changed
 
 27
-00:01:40,662 --> 00:01:45,118
-complete. The numbers reflect this demonstration, not a promised result.
+00:01:51,563 --> 00:01:53,538
+past and future dates stay protected
 
 28
-00:01:46,950 --> 00:01:50,550
-For focused work, open Pomodoro under Widgets in the desktop
+00:01:56,117 --> 00:02:00,467
+Click today’s cell to record progress For a target-based habit
 
 29
-00:01:50,550 --> 00:01:54,150
-sidebar. Choose the habit you want to work on, then
+00:02:00,542 --> 00:02:04,654
+use plus or minus then Save progress Partial counts are
 
 30
-00:01:54,150 --> 00:01:56,310
-set your work and break durations.
+00:02:04,579 --> 00:02:06,617
+saved so you can return later
 
 31
-00:01:58,117 --> 00:02:01,369
-Press Start to begin. Pause when you need to, and
+00:02:09,183 --> 00:02:12,196
+When the count reaches the target save again to complete
 
 32
-00:02:01,369 --> 00:02:04,622
-resume when you are ready. Finish or reset to save
+00:02:12,121 --> 00:02:17,583
+the day Single-target habits need just one click The dashboard
 
 33
-00:02:04,622 --> 00:02:07,875
-elapsed work. Breaks and paused time are excluded. The timer
+00:02:17,508 --> 00:02:18,896
+updates automatically
 
 34
-00:02:07,875 --> 00:02:10,477
-does not check off the habit for you.
+00:02:21,450 --> 00:02:25,150
+Use Find a habit to search by name The category
 
 35
-00:02:12,283 --> 00:02:15,741
-Switch to the compact view to keep the floating timer
+00:02:25,075 --> 00:02:28,150
+filter narrows the grid to areas such as learning fitness
 
 36
-00:02:15,741 --> 00:02:19,198
-above your other windows. Recorded work time appears in Focus
+00:02:28,275 --> 00:02:28,850
+or work
 
 37
-00:02:19,198 --> 00:02:22,656
-Insights, grouped by habit, so you can see where your
+00:02:31,383 --> 00:02:34,596
+Open a habit’s three-dot menu to edit its name schedule
 
 38
-00:02:22,656 --> 00:02:23,347
-time went.
+00:02:34,633 --> 00:02:39,358
+target or reminders Deletion asks for confirmation and removes that
 
 39
-00:02:25,150 --> 00:02:29,089
-In Settings, open Appearance and browse forty three themes. Every
+00:02:39,283 --> 00:02:41,533
+habit’s check-ins across its assigned months
 
 40
-00:02:29,089 --> 00:02:33,029
-preset supports light and dark modes. Search for a palette,
+00:02:44,083 --> 00:02:46,608
+Use the plus on the month bar to plan ahead
 
 41
-00:02:33,029 --> 00:02:36,574
-then choose the atmosphere that helps you settle in.
+00:02:47,396 --> 00:02:49,971
+Choose the month and year then select Add month
 
 42
-00:02:38,383 --> 00:02:42,401
-Follow your system appearance, or choose light or dark manually.
+00:02:52,517 --> 00:02:56,954
+Reuse the previous month’s habits or start fresh Each month
 
 43
-00:02:42,401 --> 00:02:46,419
-Typography controls let you choose a bundled font and adjust
+00:02:56,879 --> 00:03:00,354
+has its own membership while shared habits keep their identity
 
 44
-00:02:46,419 --> 00:02:49,231
-the overall text size for comfortable reading.
+00:03:01,117 --> 00:03:03,529
+Only future month tabs can be removed
 
 45
-00:02:51,050 --> 00:02:55,074
-In Data and privacy, choose Export backup to keep a
+00:03:06,083 --> 00:03:09,483
+At the top see completion rate total check-ins your best
 
 46
-00:02:55,074 --> 00:02:59,097
-portable JSON copy. Restore backup lets you bring a saved
+00:03:09,408 --> 00:03:13,896
+current streak and active habits These are real app calculations
 
 47
-00:02:59,097 --> 00:03:03,121
-copy back. Optional Google Sheets backup is managed separately under
+00:03:13,983 --> 00:03:16,346
+using demonstration history in this video
 
 48
-00:03:03,121 --> 00:03:04,730
-Trackers and cloud backup.
+00:03:18,917 --> 00:03:23,604
+Weekly summaries reveal your rhythm The consistency curve shows daily
 
 49
-00:03:06,550 --> 00:03:10,167
-A clear plan. A daily check in. A little time
+00:03:23,529 --> 00:03:26,817
+completion and Today at a glance shows today’s remaining habits
 
 50
-00:03:10,167 --> 00:03:13,783
-for focused work. TrackVerse brings those small actions together, so
+00:03:26,992 --> 00:03:28,692
+even when another month is selected
 
 51
-00:03:13,783 --> 00:03:17,038
-you can understand your routine and keep building it.
+00:03:31,250 --> 00:03:36,050
+Completion rate uses scheduled opportunities through today Future days and
 
 52
-00:03:18,850 --> 00:03:23,803
-Open TrackVerse, and create your first habit. Small steps. Extraordinary
+00:03:35,963 --> 00:03:40,038
+dates before a habit was created are excluded Streaks follow
 
 53
-00:03:23,803 --> 00:03:24,298
-you.
+00:03:39,963 --> 00:03:43,050
+scheduled days an unfinished today breaks a streak only when
+
+54
+00:03:42,975 --> 00:03:43,788
+the day ends
+
+55
+00:03:46,317 --> 00:03:50,367
+Open Pomodoro from the sidebar Choose the habit you want
+
+56
+00:03:50,279 --> 00:03:54,279
+to focus on then set work and break durations Press
+
+57
+00:03:54,192 --> 00:03:55,442
+play when you are ready
+
+58
+00:03:58,017 --> 00:04:01,029
+Pause whenever you need to and resume when you return
+
+59
+00:04:01,817 --> 00:04:06,092
+Finish and reset saves elapsed work Breaks and paused time
+
+60
+00:04:06,017 --> 00:04:08,004
+are excluded from your focus total
+
+61
+00:04:10,550 --> 00:04:13,963
+Switch to mini view for a compact resizable timer that
+
+62
+00:04:13,888 --> 00:04:18,263
+stays above ordinary windows Closing the widget hides it timing
+
+63
+00:04:18,175 --> 00:04:20,550
+continues while the main application is running
+
+64
+00:04:23,117 --> 00:04:27,079
+Open Insights to see work time divided by habit The
+
+65
+00:04:27,004 --> 00:04:31,142
+colors match your habits Focus time and daily completion are
+
+66
+00:04:31,067 --> 00:04:34,379
+separate so using the timer does not automatically check in
+
+67
+00:04:34,304 --> 00:04:34,867
+a habit
+
+68
+00:04:37,417 --> 00:04:40,954
+In Settings choose System to follow Windows appearance or select
+
+69
+00:04:40,867 --> 00:04:44,792
+Light or Dark The selected palette carries through the workspace
+
+70
+00:04:44,829 --> 00:04:46,804
+dialogs charts and timer
+
+71
+00:04:49,350 --> 00:04:52,763
+Browse forty-three theme presets each with light and dark palettes
+
+72
+00:04:53,538 --> 00:04:56,938
+Search by name or collection inspect the previews and select
+
+73
+00:04:56,863 --> 00:04:58,525
+the atmosphere that works for you
+
+74
+00:05:01,083 --> 00:05:05,508
+Typography offers Inter Lora and JetBrains Mono plus one-point text-size
+
+75
+00:05:05,433 --> 00:05:10,183
+adjustments A live preview helps you choose and Reset typography
+
+76
+00:05:10,096 --> 00:05:14,046
+restores the defaults The bundled fonts work offline
+
+77
+00:05:16,583 --> 00:05:20,696
+Export backup saves habits month tabs check-ins and focus sessions
+
+78
+00:05:20,621 --> 00:05:25,146
+as JSON Restore backup loads a saved copy after confirmation
+
+79
+00:05:25,071 --> 00:05:29,833
+and replaces the active tracker’s data Export first before replacing
+
+80
+00:05:29,758 --> 00:05:30,346
+a plan
+
+81
+00:05:32,917 --> 00:05:36,692
+For optional cloud backup expand Trackers and cloud backup then
+
+82
+00:05:36,617 --> 00:05:41,104
+choose Continue with Google Sign-in creates or finds private backup
+
+83
+00:05:41,029 --> 00:05:45,792
+spreadsheets automatically This step requires your own Google account
+
+84
+00:05:48,350 --> 00:05:53,113
+After connecting named trackers let you separate different plans You
+
+85
+00:05:53,038 --> 00:05:56,988
+can create find rename switch sync or open their sheets
+
+86
+00:05:57,763 --> 00:06:02,538
+Recovery depends on finished syncs Deleting a cloud tracker moves
+
+87
+00:06:02,463 --> 00:06:04,025
+its sheet to Drive’s Trash
+
+88
+00:06:06,617 --> 00:06:10,529
+The Windows app saves everyday work in SQLite including offline
+
+89
+00:06:11,317 --> 00:06:16,379
+You can disconnect Google without deleting local habits Local databases
+
+90
+00:06:16,304 --> 00:06:19,479
+and exported backups are not encrypted so store your copies
+
+91
+00:06:19,404 --> 00:06:20,042
+thoughtfully
+
+92
+00:06:22,617 --> 00:06:26,379
+Here is the result six habits completed today with progress
+
+93
+00:06:26,379 --> 00:06:29,617
+and focus time in view Build a plan you can
+
+94
+00:06:29,542 --> 00:06:32,229
+return to one achievable action at a time
+
+95
+00:06:34,783 --> 00:06:42,008
+TrackVerse Small steps Extraordinary you Open the app create your
+
+96
+00:06:41,933 --> 00:06:43,671
+first habit and start today
