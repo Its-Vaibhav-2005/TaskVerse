@@ -21,6 +21,10 @@ Keep Google Cloud billing disabled and do not enable paid quota increases. Stand
 
 ## Google Search visibility
 
+`downloads.html` and `contact.html` provide dedicated Downloads and Contacts pages. All five HTML pages share links to Home, Downloads, Privacy Policy and Contacts; all are in the project sitemap. Google chooses whether and how these destinations appear as sitelinks. There is no tag or schema that guarantees a sitelinks layout or first-place rankings.
+
+The separate `Its-Vaibhav-2005/Its-Vaibhav-2005.github.io` repository serves the hostname homepage and its stable `/favicon.png`. Its homepage identifies the hostname as TrackVerse and links to this project website. Google supports site names and favicons at hostname level, not independently for `/TaskVerse/`. Keep the root branding and icon available. Its `robots.txt` lists both the root and project sitemaps. The local maintenance checkout is `.local-data/seo-host-root` (ignored by this repository).
+
 The homepage identifies TrackVerse as a free Windows habit tracker by Vaibhav Pandey, with matching visible content, search metadata, social previews, and Person/WebSite/SoftwareApplication structured data. All three public HTML pages have canonical URLs and are listed in `sitemap.xml`. Keep structured data and download/version information consistent with the visible release.
 
 After deployment:
