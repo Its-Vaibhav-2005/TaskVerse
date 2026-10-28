@@ -2,13 +2,9 @@
 
 ## Current status
 
-TrackVerse's Windows installers through 1.3.0 are unsigned. The free
-SignPath Foundation application was submitted on 2026-10-24; approval and
-Electron artifact coverage remain pending. No SignPath signature has been issued.
-Version 1.3.0 is distributed unsigned because signing credentials are not
-configured on the build host and may still
-be blocked by Smart App Control. Microsoft file-review submissions are not
-code-signing approval or a guarantee that Windows will allow execution.
+TrackVerse is available on [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2). The Store distributes the approved app and handles Windows package signing and updates. Install through the Store with Smart App Control enabled. The v2.0.0 Store update is pending certification and publication.
+
+Direct-download Windows MSI installers through 2.0.0 remain unsigned. The raw MSIX attached to GitHub releases is unsigned Store-submission input, not a direct installer. The SignPath Foundation application was submitted on 2026-10-24; approval and Electron artifact coverage remain pending. No SignPath signature has been issued. These direct downloads have a different distribution status from the Store app. Microsoft file-review submissions do not grant code-signing approval.
 
 TrackVerse's own source code is [MIT licensed](LICENSE). Third-party software
 and fonts retain their original licenses and notices.

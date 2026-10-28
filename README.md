@@ -6,15 +6,16 @@ TrackVerse is a local-first habit tracker for Windows and Android. The Windows a
 
 **Current release: 2.0.0 · Windows x64 MSI/MSIX and Android test APK**
 
-**Trusted signing is pending. Smart App Control may still block this application.**
+**TrackVerse is available on [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2). Install through the Store with Smart App Control enabled. The v2.0.0 Store update is pending certification and publication; the direct MSI remains unsigned.**
 
-[Download Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.0.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
+[Get TrackVerse from Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) · [Alternative Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.0.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
 
 ## Version 2.0.0 downloads
 
 | Platform | Download | Distribution status |
 | --- | --- | --- |
-| Windows x64 | [MSI installer](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) | Unsigned; trusted signing pending |
+| Windows (recommended) | [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) | Available now; v2.0.0 update pending certification and publication |
+| Windows x64 (direct installer) | [MSI installer](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) | Unsigned; trusted signing pending |
 | Android 7+ | [Test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) | Debug-signed; production signing pending |
 | Microsoft Store submission | [MSIX package](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-x64.msix) | Unsigned input for Store certification; not a direct installer |
 
@@ -61,14 +62,14 @@ Android now has a native phone interface, Google sign-in, a consistency curve, a
 
 ## Install and get started
 
-1. Download the Windows x64 MSI and checksum from [Releases](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest).
-2. Run the installer and open TrackVerse from the Start menu or desktop shortcut.
+1. Open [TrackVerse on Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) and choose Get or Install. On Android, download the [2.0.0 test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk).
+2. Open TrackVerse after installation. Microsoft Store manages Windows app updates.
 3. Choose **Setup Locally** for SQLite-only use, or **Continue with Google** for SQLite plus optional cloud backup.
 4. Click **New habit**, enter a name, select its schedule, appearance, daily target, and optional reminder settings, then create it.
 5. Click today's scheduled cell to record progress; use the count controls for habits with a daily target above one.
 6. Use the month-bar **+** to plan another month, or open **Widgets → Pomodoro** to focus on a habit.
 
-New installations start without sample habits or personal account credentials. The 2.0.0 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
+New installations start without sample habits or personal account credentials. When moving from MSI to Microsoft Store, export a JSON backup first, install the Store app, then import the backup and verify your trackers. The Store app has a separate installation identity and does not automatically replace the MSI. Keep Smart App Control enabled. The alternative direct-download 2.0.0 MSI remains unsigned; its clean-machine upgrade acceptance remains pending.
 
 To verify the installer, compare this PowerShell result with the checksum supplied alongside your download:
 
