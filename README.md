@@ -2,13 +2,25 @@
 
 **Build better habits. Make time for what matters. Keep your data yours.**
 
-TrackVerse is a local-first Windows habit tracker with a spreadsheet-style workspace, habit-linked Pomodoro timer, automatic progress dashboards, and optional Google Sheets backup. Your everyday work is saved in native SQLite, including when you are offline.
+TrackVerse is a local-first habit tracker for Windows and Android. The Windows app offers a spreadsheet-style workspace; Android has a native phone interface. Both save habits in SQLite and share optional, private Google Sheets backups.
 
 **Current release: 2.0.0 · Windows x64 MSI/MSIX and Android test APK**
 
 **Trusted signing is pending. Smart App Control may still block this application.**
 
-[Download Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/latest) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
+[Download Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.0.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
+
+## Version 2.0.0 downloads
+
+| Platform | Download | Distribution status |
+| --- | --- | --- |
+| Windows x64 | [MSI installer](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) | Unsigned; trusted signing pending |
+| Android 7+ | [Test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) | Debug-signed; production signing pending |
+| Microsoft Store submission | [MSIX package](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-x64.msix) | Unsigned input for Store certification; not a direct installer |
+
+**Sync between devices:** use the same Google account, back up a tracker on the first device, then choose **Find my trackers** on the other device. Creating another tracker with the same name creates a separate tracker. Android **Settings → Create tracker** keeps each plan separate.
+
+Validation: **46 Flutter tests, 29 desktop tests and 8 release-policy tests passed**. The Android test build completed a live Google Sheets backup and discovery check; the owner confirmed both platforms syncing. Physical-device, clean-machine installer/upgrade and Store certification checks remain pending.
 
 ## Explore
 

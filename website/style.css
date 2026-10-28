@@ -7,3 +7,5 @@
 /* Keep primary destinations accessible on every screen size. */
 .site-footer nav{flex-wrap:wrap}.page-intro h1{font-size:clamp(44px,6vw,72px)}.page-intro p{max-width:720px;color:var(--muted)}
 @media(max-width:700px){.site-header{flex-wrap:wrap}.site-header nav{width:100%;display:flex;flex-wrap:wrap;gap:12px 18px}.site-header nav>a:not(.nav-download){display:inline-block}.site-header nav a{font-size:12px}.site-header .nav-download{padding:6px 10px}}
+
+.platform-update{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,320px);gap:64px;align-items:center}.platform-update p,.platform-update li{color:var(--muted)}.platform-update img{width:100%;height:auto;border-radius:24px;box-shadow:0 20px 70px #1d292422}.platform-update ul{padding-left:20px}@media(max-width:700px){.platform-update{grid-template-columns:1fr;gap:32px}.platform-update img{max-width:290px;margin:auto}}
