@@ -61,7 +61,8 @@ async function createTracker(alias,copyCurrent) {
 app.on('second-instance',showMainWindow);
 app.whenReady().then(async()=>{
   if(!gotLock)return;
-  app.setAppUserModelId('app.trackverse.desktop');
+  // Packaged Windows apps inherit the Store package's notification identity.
+  if(!process.windowsStore)app.setAppUserModelId('app.trackverse.desktop');
   const dataPath=process.env.TRACKVERSE_DATA_DIR||app.getPath('userData');
   fs.mkdirSync(dataPath,{recursive:true});
   manager=new WorkspaceManager(dataPath);store=manager.root;

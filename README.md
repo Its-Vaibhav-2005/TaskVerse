@@ -4,7 +4,7 @@
 
 TrackVerse is a local-first Windows habit tracker with a spreadsheet-style workspace, habit-linked Pomodoro timer, automatic progress dashboards, and optional Google Sheets backup. Your everyday work is saved in native SQLite, including when you are offline.
 
-**Current release: 1.3.0 · Windows x64 · unsigned**
+**Current release: 2.0.0 · Windows x64 MSI/MSIX and Android test APK**
 
 **Trusted signing is pending. Smart App Control may still block this application.**
 
@@ -43,9 +43,9 @@ TrackVerse is a local-first Windows habit tracker with a spreadsheet-style works
 | Portable backups | Export and restore habits, monthly plans, check-ins, and focus sessions as JSON. |
 | Organized Settings | Manage appearance, typography, trackers, backups, and daily behavior in responsive grouped cards. |
 
-### New in 1.3.0
+### New in 2.0.0
 
-Settings no longer displays a large blank sheet area. Tracker creation shows progress and schedules the first cloud backup in the background, large tracker lists load as needed, typography updates save in order, and privacy and support links are available in Settings. Existing habits and history are retained. See the [full changelog](CHANGELOG.md).
+Android now has a native phone interface, Google sign-in, a consistency curve, and Settings → Create tracker. Trackers stay separate and share the Windows versioned Google Sheets backup protocol. Pending changes in inactive Android trackers are retried while the app is open. The Android download is debug-signed for testing; the MSIX is unsigned Store submission input. See the [full changelog](CHANGELOG.md).
 
 ## Install and get started
 
@@ -56,12 +56,12 @@ Settings no longer displays a large blank sheet area. Tracker creation shows pro
 5. Click today's scheduled cell to record progress; use the count controls for habits with a daily target above one.
 6. Use the month-bar **+** to plan another month, or open **Widgets → Pomodoro** to focus on a habit.
 
-New installations start without sample habits or personal account credentials. The 1.3.0 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
+New installations start without sample habits or personal account credentials. The 2.0.0 MSI and application are unsigned and can be blocked by Smart App Control. Keep Windows protection enabled. For upgrades, export a backup first, quit TrackVerse including its tray process, and install the newer release using the same Windows account and scope. User data is stored separately from installation files. Upgrade identity is preserved; clean-machine upgrade acceptance remains pending.
 
 To verify the installer, compare this PowerShell result with the checksum supplied alongside your download:
 
 ```powershell
-Get-FileHash .\TrackVerse-Setup-1.3.0-x64.msi -Algorithm SHA256
+Get-FileHash .\TrackVerse-Setup-2.0.0-x64.msi -Algorithm SHA256
 ```
 
 ### Watch the walkthrough
@@ -276,9 +276,9 @@ Read the [privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.h
 
 ### Release validation
 
-Version 1.3.0 passed **29 desktop tests and 25 Flutter tests**, with a clean Flutter analyzer and a successful web build. The MSI keeps the existing upgrade identity. This package is unsigned; the required signature and publisher audit cannot pass until signing credentials are configured.
+Version 2.0.0 is checked by the desktop, Flutter, release-policy and cross-platform sync integration suites, with a clean Flutter analyzer and a successful web build. The MSI keeps the existing upgrade identity. This package is unsigned; the required signature and publisher audit cannot pass until signing credentials are configured.
 
-The 1.3.0 installer is distributed unsigned because signing credentials are not configured on the build host. The separate unsigned-package audit checks the MSI version, existing upgrade identity, required packaged features, private-data exclusions, SHA-256, and Authenticode status; Windows signature verification and trusted-publisher audit were not performed. SignPath approval remains pending. WiX ICE validation is disabled because the build host policy blocks it. Clean-machine installation, upgrade, and Smart App Control acceptance remain unverified. These checks are not a security certification.
+The 2.0.0 installer is distributed unsigned because signing credentials are not configured on the build host. The separate unsigned-package audit checks the MSI version, existing upgrade identity, required packaged features, private-data exclusions, SHA-256, and Authenticode status; Windows signature verification and trusted-publisher audit were not performed. SignPath approval remains pending. WiX ICE validation is disabled because the build host policy blocks it. Clean-machine installation, upgrade, and Smart App Control acceptance remain unverified. These checks are not a security certification.
 
 ## Development and packaging
 
@@ -292,7 +292,7 @@ The 1.3.0 installer is distributed unsigned because signing credentials are not 
 | Cloud backup | Google OAuth and per-file Drive/Sheets integration |
 | Installer | Windows x64 MSI |
 
-**Windows x64 is the released target.** Linux and Android scaffolding exists for future work, but those targets have not been built, verified, or released. A browser preview uses browser storage and is not the native Windows SQLite application.
+**Windows x64 is the released target.** Android now has a native Flutter mobile interface, local SQLite persistence, portable backups, a focus timer, and a Google Sheets sync implementation compatible with the Windows backup journal. Google OAuth clients are registered for this host’s debug certificate, and the owner confirmed account sign-in working. See [Android setup, builds, and acceptance](docs/android.md). The Android APK is distributed as a debug-signed test build. Linux remains scaffolding for future work. A browser preview uses browser storage and is not the native Windows SQLite application.
 
 ### Run from source
 
@@ -328,9 +328,21 @@ npm run dist:win -- --config.directories.output=dist/signed-release
 npm run audit:release -- dist/signed-release
 ```
 
-Configure a publicly trusted signing identity using the [Windows signing guide](docs/windows-signing.md) before producing a signed release. The 1.3.0 MSI is an explicitly unsigned build because no signing identity is configured on this host; its package contents and upgrade identity are checked separately, but the signed release audit cannot pass. Keep Windows security protections enabled. The assisted per-user installer creates desktop and Start menu shortcuts. Building does not publish a release to GitHub. Run `npm run test:release` to check the signing configuration rules.
+Configure a publicly trusted signing identity using the [Windows signing guide](docs/windows-signing.md) before producing a signed release. The 2.0.0 MSI is an explicitly unsigned build because no signing identity is configured on this host; its package contents and upgrade identity are checked separately, but the signed release audit cannot pass. Keep Windows security protections enabled. The assisted per-user installer creates desktop and Start menu shortcuts. Building does not publish a release to GitHub. Run `npm run test:release` to check the signing configuration rules.
 
-For the documented unsigned 1.3.0 build, use the separately named commands `npm run dist:win:unsigned -- --config.directories.output=dist/release-1.3.0` and `npm run audit:release:unsigned -- dist/release-1.3.0`. The unsigned configuration does not change the default signed release path.
+For the documented unsigned 2.0.0 build, use the separately named commands `npm run dist:win:unsigned -- --config.directories.output=dist/release-2.0.0` and `npm run audit:release:unsigned -- dist/release-2.0.0`. The unsigned configuration does not change the default signed release path.
+
+### Build a Microsoft Store MSIX
+
+Save the exact Store Product identity values in ignored `.config/msix-identity.json`,
+then run `npm run dist:win:msix` on Windows. This recipe runs every desktop,
+release-policy and Flutter test, Flutter analysis, and a fresh web build before
+packing. The clean MSIX, checksum, manifest, and verification report are saved in
+`release-2.0.0/`. See [MSIX setup and acceptance](docs/windows-msix.md).
+
+This is an unsigned Store-submission package; Microsoft signs it after
+certification. It does not replace the existing MSI automatically. Export/import
+a backup when migrating, and verify the data in the Store app.
 
 ### Theme catalog and demo data
 

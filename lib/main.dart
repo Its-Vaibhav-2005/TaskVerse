@@ -14,6 +14,7 @@ import 'local_clock.dart';
 import 'cloud_ui.dart';
 import 'focus_insights.dart';
 import 'settings_page.dart';
+import 'mobile_entry.dart';
 
 const ink = Color(0xFF252735);
 const muted = Color(0xFF596270);
@@ -62,24 +63,32 @@ class TrackVerse extends StatelessWidget {
       darkTheme: trackVerseTheme(Brightness.dark),
       themeMode: appearance.mode,
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: AppTextScaler(appearance.fontStep)),
+        data: MediaQuery.of(context).copyWith(
+          textScaler: AppTextScaler(
+            appearance.fontStep,
+            system: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+                ? MediaQuery.textScalerOf(context)
+                : TextScaler.noScaling,
+          ),
+        ),
         child: child!,
       ),
-      home: const Home(),
+      home: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
+          ? const MobileApp()
+          : const Home(),
     ),
   );
 }
 
 class AppTextScaler extends TextScaler {
   final int step;
-  const AppTextScaler(this.step);
+  final TextScaler system;
+  const AppTextScaler(this.step, {this.system = TextScaler.noScaling});
   @override
   double scale(double fontSize) =>
-      (fontSize + step).clamp(6, double.infinity).toDouble();
+      system.scale((fontSize + step).clamp(6, double.infinity).toDouble());
   @override
-  double get textScaleFactor => (13 + step) / 13;
+  double get textScaleFactor => scale(13) / 13;
 }
 
 class Home extends StatefulWidget {

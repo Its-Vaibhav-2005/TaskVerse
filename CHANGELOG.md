@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0 — 2026-10-28
+
+- Added native Android Today, Progress, Focus and Sync screens with local SQLite storage.
+- Added Google sign-in and the same versioned Google Sheets backup journal as Windows.
+- Added Settings → Create tracker and switching between independent trackers on Android.
+- Retry pending inactive Android tracker changes while the app is open, including after switching and resuming.
+- Added a subtle 21-day consistency curve behind the Android Today headline.
+- Added integration coverage that exchanges edits between the actual Windows and Android sync engines.
+- Preserved the Windows MSI upgrade identity and Store MSIX identity.
+- Distribution: unsigned Windows MSI, unsigned Store-submission MSIX, debug-signed Android test APK. Trusted Windows signing and Android production signing remain separate setup steps.
+
+
 ## 1.3.0 — 2026-10-25
 
 Minor feature update from 1.2.1 (Flutter build 5), following Major.Minor.Micro.

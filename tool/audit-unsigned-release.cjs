@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const {spawnSync} = require('node:child_process');
 const asar = require('@electron/asar');
 
-function readMsiMetadata(msi, expectedUpgradeCode) {
+function readMsiMetadata(msi, expectedUpgradeCode, expectedVersion) {
   const script = String.raw`
 $ErrorActionPreference = 'Stop'
 $msi = $env:TRACKVERSE_MSI_FILE
@@ -49,7 +49,7 @@ try {
   for (const key of ['ProductName', 'ProductVersion', 'Manufacturer', 'ProductCode', 'SignatureStatus']) result[key] = scalar(result[key]);
   const normalizeGuid = value => value.replace(/[{}]/g, '').toUpperCase();
   const upgradeCodes = [result.UpgradeCodes].flat(Infinity).filter(value => typeof value === 'string').map(normalizeGuid);
-  if (result.ProductName !== 'TrackVerse' || !/^1\.3\.0(?:\.0)?$/.test(result.ProductVersion)) throw Error(`MSI product name or version does not match: ${JSON.stringify({name: result.ProductName, version: result.ProductVersion})}`);
+  if (result.ProductName !== 'TrackVerse' || ![expectedVersion, `${expectedVersion}.0`].includes(result.ProductVersion)) throw Error(`MSI product name or version does not match: ${JSON.stringify({name: result.ProductName, version: result.ProductVersion})}`);
   if (!upgradeCodes.includes(normalizeGuid(expectedUpgradeCode))) throw Error(`MSI upgrade identity mismatch: expected ${expectedUpgradeCode}; found ${JSON.stringify(upgradeCodes)}.`);
   if (result.SignatureStatus !== 'NotSigned') throw Error(`Expected an unsigned MSI; Windows reports ${result.SignatureStatus}.`);
   return result;
@@ -58,12 +58,12 @@ try {
 async function main() {
   if (process.platform !== 'win32') throw Error('MSI package inspection requires Windows.');
   const root = path.resolve(__dirname, '..');
-  const dist = path.resolve(root, process.argv[2] || 'dist/release-1.3.0');
-  const msi = path.join(dist, 'TrackVerse-Setup-1.3.0-x64.msi');
+  const dist = path.resolve(root, process.argv[2] || 'dist/release-2.0.0');
+  const msi = path.join(dist, 'TrackVerse-Setup-2.0.0-x64.msi');
   const archive = path.join(dist, 'win-unpacked', 'resources', 'app.asar');
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const baseline = JSON.parse(fs.readFileSync(path.join(__dirname, 'windows-upgrade-baseline.json'), 'utf8'));
-  if (pkg.version !== '1.3.0' || !fs.existsSync(msi) || !fs.existsSync(archive)) throw Error('Expected 1.3.0 MSI and packaged application.');
+  if (pkg.version !== '2.0.0' || !fs.existsSync(msi) || !fs.existsSync(archive)) throw Error('Expected 2.0.0 MSI and packaged application.');
 
   const files = asar.listPackage(archive).map(file => file.replaceAll('\\', '/'));
   const forbidden = files.filter(file => /(^|\/)(\.local-data|\.config|test|tool|fixtures)\//.test(file) || /google-tokens|client_secret[^/]*\.json|\.(sqlite3?|db)(-wal|-shm)?$|\.(enc|test\.cjs)$/.test(file) || /\/desktop\/sample-tracker\.cjs$/.test(file));
@@ -72,7 +72,7 @@ async function main() {
   for (const file of required) if (!files.includes(`/${file}`)) throw Error(`MSI is missing ${file}.`);
   const bundled = JSON.parse(asar.extractFile(archive, 'package.json').toString());
   if (bundled.version !== pkg.version) throw Error('Packaged application version mismatch.');
-  const metadata = readMsiMetadata(msi, baseline.upgradeCode);
+  const metadata = readMsiMetadata(msi, baseline.upgradeCode, pkg.version);
   const palettes = JSON.parse(asar.extractFile(archive, 'assets/themes.json').toString());
   if (palettes.length !== 43) throw Error('MSI is missing theme presets.');
   const digest = crypto.createHash('sha256');
