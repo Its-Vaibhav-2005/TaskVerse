@@ -202,3 +202,5 @@ shared in-memory journal transport, including Android creation, a Windows edit a
 an Android check-in returned to Windows. This is distinct from a live, two-installed-device
 Google API acceptance test, which remains pending. The distributed APK uses the
 registered debug certificate; it is a test build, not a Play Store production release.
+
+Live Android 2.0.0 smoke test (October 28, 2026): created a separate empty test tracker, backed it up with the connected Google account, observed Up to date after upload verification, and found the test tracker through Google Drive discovery. Existing local habits remained in their original tracker.
