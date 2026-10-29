@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_version.dart';
 import 'appearance.dart';
 import 'theme_gallery.dart';
 import 'desktop_bridge.dart';
@@ -643,7 +644,7 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'TrackVerse 1.3.0',
+                  appVersionLabel,
                   style: TextStyle(color: c.muted, fontSize: 10),
                 ),
               ],

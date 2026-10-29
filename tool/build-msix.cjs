@@ -15,7 +15,7 @@ async function main() {
   if (process.platform !== 'win32') throw Error('Build the MSIX on Windows.');
   const pkg = require('../package.json');
   if(pkg.version !== '2.0.0') throw Error('This release recipe targets version 2.0.0.');
-  const {readIdentity,msixConfig} = require('./windows-msix.cjs');
+  const {readIdentity,msixConfig,storePackageVersion} = require('./windows-msix.cjs');
   const identity = readIdentity(); msixConfig(identity);
   const flutter = process.env.FLUTTER_BIN || path.join(os.homedir(), '.codex/tools/flutter/bin/flutter.bat');
   if (!fs.existsSync(flutter) || flutter.includes('"')) throw Error('Set FLUTTER_BIN to your flutter.bat path.');
@@ -29,6 +29,9 @@ async function main() {
   fs.mkdirSync(output, {recursive:true}); fs.mkdirSync(work, {recursive:true});
   fs.writeFileSync(path.join(work,'test-results.json'), JSON.stringify({desktop:'All desktop tests passed',flutter:'All Flutter tests passed',releasePolicy:'All release policy tests passed',flutterAnalysis:'No issues found',webBuild:'Passed',beforePacking:true,checkedAt:new Date().toISOString()},null,2));
   const assets = path.join(work,'resources/appx'); fs.mkdirSync(assets,{recursive:true});
+  const manifestTemplate = fs.readFileSync(path.join(root, 'node_modules/app-builder-lib/templates/appx/appxmanifest.xml'), 'utf8');
+  if (!manifestTemplate.includes('${version}')) throw Error('Store manifest template is missing its version placeholder.');
+  fs.writeFileSync(path.join(work, 'resources/AppxManifest.xml'), manifestTemplate.replace('${version}', storePackageVersion));
   const logoScript = `$ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.Drawing
 $source=[Drawing.Image]::FromFile($env:TRACKVERSE_MSIX_LOGO)

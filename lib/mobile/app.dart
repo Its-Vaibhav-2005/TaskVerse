@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 import '../appearance.dart';
+import '../app_version.dart';
 import '../model.dart';
 import 'controller.dart';
 import 'consistency_header.dart';
@@ -1336,7 +1337,7 @@ class _MobileAppState extends State<MobileApp> with WidgetsBindingObserver {
               ),
               const SizedBox(height: 16),
               Text(
-                'TrackVerse 2.0.0 · Your habits, your pace.\nLocal first. No ads. No tracking.',
+                '$appVersionLabel · Your habits, your pace.\nLocal first. No ads. No tracking.',
                 style: TextStyle(
                   color: palette.muted,
                   fontSize: 12,

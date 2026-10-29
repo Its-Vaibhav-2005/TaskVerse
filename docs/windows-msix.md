@@ -40,6 +40,12 @@ verification report and README. Build caches and inspection files stay in ignore
 
 ## Signing and acceptance
 
+The corrected app still displays **2.0.0**, matching the Android and GitHub
+release. Its Store package version is **2.0.1.0**: the previous 2.0.0.0 package
+was already published, so the replacement must have a higher package version.
+The build generates its manifest from the installed builder's template with
+this explicit servicing version; the package audit verifies it.
+
 This is an unsigned input package for the reserved Microsoft Store product.
 Microsoft handles Store signing after certification. It is not a trusted
 direct-download installer. No self-signed certificate or trust-store modification

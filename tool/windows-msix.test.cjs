@@ -19,6 +19,8 @@ test('Store packaging fits installed builder schema, escapes XML, and leaves def
   assert.equal(config.appx.identityName, identity.identityName);
   assert.equal(config.appx.applicationId, 'TrackVerse');
   assert.equal(config.appx.setBuildNumber, false);
+  assert.equal(require('./windows-msix.cjs').storePackageVersion, '2.0.1.0');
+  assert.ok(config.appx.customManifestPath.endsWith('AppxManifest.xml'));
   assert.equal(config.appx.addAutoLaunchExtension, false);
   assert.deepEqual(config.appx.capabilities, ['internetClient']);
   assert.equal(require('../package.json').build.forceCodeSigning, true);

@@ -10,6 +10,8 @@ TrackVerse is a local-first habit tracker for Windows and Android. The Windows a
 
 [Get TrackVerse from Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) · [Alternative Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.0.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
 
+The rebuilt v2.0.0 release corrects the Windows Settings version label. Both apps display 2.0.0; Android build 7 and Store servicing package 2.0.1.0 distinguish these corrected binaries from the previous release. The Store update requires Microsoft certification before publication.
+
 ## Version 2.0.0 downloads
 
 | Platform | Download | Distribution status |
@@ -21,7 +23,7 @@ TrackVerse is a local-first habit tracker for Windows and Android. The Windows a
 
 **Sync between devices:** use the same Google account, back up a tracker on the first device, then choose **Find my trackers** on the other device. Creating another tracker with the same name creates a separate tracker. Android **Settings → Create tracker** keeps each plan separate.
 
-Validation: **46 Flutter tests, 29 desktop tests and 8 release-policy tests passed**. The Android test build completed a live Google Sheets backup and discovery check; the owner confirmed both platforms syncing. Physical-device, clean-machine installer/upgrade and Store certification checks remain pending.
+Validation: **47 Flutter tests, 29 desktop tests and 8 release-policy tests passed**. The Android test build completed a live Google Sheets backup and discovery check; the owner confirmed both platforms syncing. Physical-device, clean-machine installer/upgrade and Store certification checks remain pending.
 
 ## Explore
 

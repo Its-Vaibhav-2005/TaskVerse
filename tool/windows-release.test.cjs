@@ -54,7 +54,7 @@ test('release version and installer identity preserve the released 1.1.0 upgrade
   assert.equal(pkg.version, '2.0.0');
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[''].version, pkg.version);
-  assert.match(fs.readFileSync(path.join(__dirname, '../pubspec.yaml'), 'utf8'), /^version: 2\.0\.0\+6$/m);
+  assert.match(fs.readFileSync(path.join(__dirname, '../pubspec.yaml'), 'utf8'), /^version: 2\.0\.0\+7$/m);
   assert.equal(pkg.build.msi.upgradeCode, baseline.upgradeCode);
   assert.equal(pkg.build.msi.upgradeCode, legacyDefault);
   assert.equal(pkg.build.appId, baseline.appId);

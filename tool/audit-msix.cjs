@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const {spawnSync} = require('node:child_process');
 const {DOMParser} = require('@xmldom/xmldom');
 const asar = require('@electron/asar');
-const {readIdentity} = require('./windows-msix.cjs');
+const {readIdentity,storePackageVersion} = require('./windows-msix.cjs');
 const root = path.resolve(__dirname, '..');
 const work = path.join(root, '.local-data/msix-2.0.0');
 const output = path.join(root, 'release-2.0.0');
@@ -33,7 +33,7 @@ async function auditMsix() {
   const first = name => doc.getElementsByTagName(name)[0];
   assert.equal(first('Identity').getAttribute('Name'),identity.identityName);
   assert.equal(first('Identity').getAttribute('Publisher'),identity.publisher);
-  assert.equal(first('Identity').getAttribute('Version'),`${pkg.version}.0`);
+  assert.equal(first('Identity').getAttribute('Version'),storePackageVersion);
   assert.equal(first('Identity').getAttribute('ProcessorArchitecture'),'x64');
   assert.equal(first('PublisherDisplayName').textContent,identity.publisherDisplayName);
   assert.equal(first('Application').getAttribute('Id'),'TrackVerse');
@@ -76,7 +76,7 @@ async function auditMsix() {
   const sha256=await hash(artifact);
   const tests=JSON.parse(fs.readFileSync(path.join(work,'test-results.json'),'utf8'));
   assert.equal(tests.beforePacking,true);
-  const report={version:pkg.version,packageVersion:`${pkg.version}.0`,architecture:'x64',artifact:artifactName,bytes:fs.statSync(artifact).size,sha256,identity,capabilities,
+  const report={version:pkg.version,packageVersion:storePackageVersion,architecture:'x64',artifact:artifactName,bytes:fs.statSync(artifact).size,sha256,identity,capabilities,
     minimumWindowsVersion:first('TargetDeviceFamily').getAttribute('MinVersion'),
     tests,sdk:{package:'Microsoft.Windows.SDK.BuildTools',version:sdk.version,packageSha256:sdk.sha256},packageChecks:{sdkPackValidation:true,sdkUnpackPassed:true,manifestIdentityMatchesPartnerCenter:true,applicationArchiveVersionMatches:true,privateDataExcluded:true,publicInstalledOAuthMetadataOnly:true,licenseIncluded:true,brandedLogoSizesValid:true,unpackedPayloadHashesMatch:true,containerFiles:containerFiles.length,applicationFiles:payloadFiles.length,asarEntries:files.length},
     codeSigned:false,storeCertified:false,installedOrLaunched:false,windowsAppCertificationKitRun:false,

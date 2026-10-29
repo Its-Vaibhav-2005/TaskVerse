@@ -2,6 +2,11 @@
 
 ## 2.0.0 — 2026-10-28
 
+Rebuilt on 2026-10-29 to correct the Windows Settings version label. Windows
+and Android share the same 2.0.0 display value, checked against both package
+manifests. Android build number is 7. Microsoft Store servicing package version
+is 2.0.1.0 because the earlier 2.0.0.0 package was already published.
+
 - Added native Android Today, Progress, Focus and Sync screens with local SQLite storage.
 - Added Google sign-in and the same versioned Google Sheets backup journal as Windows.
 - Added Settings → Create tracker and switching between independent trackers on Android.

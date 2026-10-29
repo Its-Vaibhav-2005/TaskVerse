@@ -3,6 +3,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {build} = require('../package.json');
 const root = path.resolve(__dirname, '..');
+// Store 2.0.0.0 is already published; the corrected 2.0.0 app needs a
+// monotonically higher servicing package version (Store revision stays zero).
+const storePackageVersion = '2.0.1.0';
 const xml = value => value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 
 function msixConfig(identity) {
@@ -16,6 +19,7 @@ function msixConfig(identity) {
     toolsets: {winCodeSign: '1.1.0'},
     win: {...build.win, target: 'appx', signExecutable: false, signExts: []},
     appx: {
+      customManifestPath: path.join(root, '.local-data/msix-2.0.0/resources/AppxManifest.xml'),
       // This builder version calls the target "appx"; MakeAppx writes MSIX directly.
       artifactName: 'TrackVerse-${version}-${arch}.msix',
       applicationId: 'TrackVerse',
@@ -38,3 +42,4 @@ function readIdentity() {
 module.exports = () => msixConfig(readIdentity());
 module.exports.msixConfig = msixConfig;
 module.exports.readIdentity = readIdentity;
+module.exports.storePackageVersion = storePackageVersion;
