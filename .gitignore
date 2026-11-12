@@ -83,3 +83,4 @@ app.*.map.json
 /release-android/
 
 /release-2.0.0/
+/release-2.2.0/

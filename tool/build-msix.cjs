@@ -3,8 +3,8 @@ const path = require('node:path');
 const os = require('node:os');
 const {spawnSync} = require('node:child_process');
 const root = path.resolve(__dirname, '..');
-const output = path.join(root, 'release-2.0.0');
-const work = path.join(root, '.local-data/msix-2.0.0');
+const output = path.join(root, 'release-2.2.0');
+const work = path.join(root, '.local-data/msix-2.2.0');
 
 function run(file, args, options = {}) {
   const result = spawnSync(file, args, {cwd:root, stdio:'inherit', ...options});
@@ -14,7 +14,7 @@ function run(file, args, options = {}) {
 async function main() {
   if (process.platform !== 'win32') throw Error('Build the MSIX on Windows.');
   const pkg = require('../package.json');
-  if(pkg.version !== '2.0.0') throw Error('This release recipe targets version 2.0.0.');
+  if(pkg.version !== '2.2.0') throw Error('This release recipe targets version 2.2.0.');
   const {readIdentity,msixConfig,storePackageVersion} = require('./windows-msix.cjs');
   const identity = readIdentity(); msixConfig(identity);
   const flutter = process.env.FLUTTER_BIN || path.join(os.homedir(), '.codex/tools/flutter/bin/flutter.bat');

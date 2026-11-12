@@ -9,6 +9,14 @@ class FakeGooglePlatform extends GoogleSignInPlatform {
   final requests = <AuthorizationRequestDetails>[];
   bool grant = true, cachedGrant = true;
   int initializations = 0;
+  int clearedTokens = 0;
+  @override
+  Future<void> clearAuthorizationToken(
+    ClearAuthorizationTokenParams params,
+  ) async {
+    clearedTokens++;
+  }
+
   final result = const AuthenticationResults(
     user: GoogleSignInUserData(email: 'tester@example.com', id: 'test-user'),
     authenticationTokens: AuthenticationTokenData(idToken: null),
@@ -64,6 +72,25 @@ void main() {
     GoogleSignInPlatform.instance = platform;
   });
   test(
+    'expired access token refreshes and retries the same request once',
+    () async {
+      var calls = 0;
+      final google = MobileGoogleSheets(
+        webClientId: '123-test.apps.googleusercontent.com',
+        client: MockClient(
+          (request) async => ++calls == 1
+              ? http.Response('{}', 401)
+              : http.Response('{"values":[]}', 200),
+        ),
+      );
+      addTearDown(google.close);
+      await google.connect();
+      expect(await google.read('sheet'), isEmpty);
+      expect(calls, 2);
+      expect(platform.clearedTokens, 1);
+    },
+  );
+  test(
     'passes the Web client ID, grants per-file access, and calls Sheets with the authorized identity',
     () async {
       final google = MobileGoogleSheets(
@@ -71,7 +98,10 @@ void main() {
         client: MockClient((request) async {
           expect(request.headers['Authorization'], 'Bearer test-only-token');
           expect(request.url.host, 'sheets.googleapis.com');
-          expect(Uri.decodeComponent(request.url.path), contains('_TrackVerse History'));
+          expect(
+            Uri.decodeComponent(request.url.path),
+            contains('_TrackVerse History'),
+          );
           return http.Response('{"values":[]}', 200);
         }),
       );

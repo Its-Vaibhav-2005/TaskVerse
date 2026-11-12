@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.0 — 2026-11-12
+
+- Sync on opening/resuming, reconnection, edits, and randomized 1–3 minute intervals while running. Refresh all linked trackers for the connected account.
+- Android retries restored sign-in and expired authorization, bounds the entire HTTP request, and lets Sync Now recheck a previously conflicted tracker.
+- Merge independent edits using the common journal snapshot; preserve explicit choices for overlapping edits and append-only recovery history.
+- Windows no longer rewrites Google summary sheets on every unchanged poll, reducing quota pressure. Manual sync waits for completion; reconnect clears retry backoff.
+- Both apps display 2.2.0; Android build 8, Store package 2.2.0.0. The APK retains the existing debug signing identity. The MSIX is unsigned Store-submission input.
+
+
 ## 2.0.0 — 2026-10-28
 
 Rebuilt on 2026-10-29 to correct the Windows Settings version label. Windows

@@ -63,7 +63,7 @@ class WorkspaceManager {
     catch(e){db.db.exec('ROLLBACK');throw e;}
     if(snapshot.alias)this.rename(id,snapshot.alias);
   }
-  markSynced(id,revision,base) {const state=this.store(id).getPreference('syncState',{});this.updateSync(id,{base,lastSync:new Date().toISOString(),dirty:state.revision!==revision,status:state.revision!==revision?'pending':'synced',error:null,pending:null});}
+  markSynced(id,revision,base) {const state=this.store(id).getPreference('syncState',{});this.updateSync(id,{base,lastSync:new Date().toISOString(),dirty:(state.revision||0)!==revision,status:(state.revision||0)!==revision?'pending':'synced',error:null,pending:null});}
   remove(id) {
     if(id==='local'||!this.profile(id)?.sheet_id)throw Error('Only Google trackers can be deleted here.');
     // Archive the database on disk rather than destroying offline records.

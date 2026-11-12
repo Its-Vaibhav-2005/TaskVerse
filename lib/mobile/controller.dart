@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../model.dart';
 import 'backup.dart';
 import 'google_sheets.dart';
 import 'store.dart';
+import 'merge_snapshot.dart';
 
 class MobileController extends ChangeNotifier {
   static const preview = bool.fromEnvironment('TRACKVERSE_PREVIEW');
@@ -15,7 +17,8 @@ class MobileController extends ChangeNotifier {
   MobileWorkspace? active;
   bool loading = true, busy = false, editing = false;
   String? error;
-  Timer? _timer, _debounce;
+  Timer? _timer, _debounce, _networkTimer;
+  bool _checking = false, _online = false;
   bool _closed = false;
   MobileController({MobileStore? store, MobileGoogleSheets? google})
     : store = store ?? MobileStore(),
@@ -53,13 +56,42 @@ class MobileController extends ChangeNotifier {
       } catch (_) {
         /* Offline local work remains available. */
       }
-      _timer = Timer.periodic(const Duration(seconds: 60), (_) => syncAll());
+      _planSync();
+      _networkTimer = Timer.periodic(
+        const Duration(seconds: 15),
+        (_) => checkConnection(),
+      );
     } catch (e) {
       error = _friendly(e);
     }
     loading = false;
     _notify();
-    if (google.connected) unawaited(syncAll());
+    unawaited(syncAll());
+  }
+
+  void _planSync() {
+    _timer?.cancel();
+    if (_closed) return;
+    _timer = Timer(Duration(seconds: 60 + Random().nextInt(121)), () async {
+      try {
+        await syncAll();
+      } finally {
+        _planSync();
+      }
+    });
+  }
+
+  Future<void> checkConnection() async {
+    if (_closed || _checking || loading || busy || editing) return;
+    _checking = true;
+    try {
+      final online = await google.reachable();
+      final reconnected = online && !_online;
+      _online = online;
+      if (reconnected && !_closed) await syncAll();
+    } finally {
+      _checking = false;
+    }
   }
 
   static List<Habit> previewHabits(DateTime now) => List.generate(4, (i) {
@@ -150,13 +182,14 @@ class MobileController extends ChangeNotifier {
   });
 
   Future<void> syncAll() async {
-    if (loading || busy || editing || !google.connected) return;
+    if (_closed || loading || busy || editing) return;
+    if (!google.connected) {
+      await run(() => google.restore());
+      if (!google.connected || _closed) return;
+    }
     final ids = workspaces
         .where(
-          (w) =>
-              w.sheetId != null &&
-              (w.id == active?.id || w.dirty) &&
-              w.sync['account'] == google.accountId,
+          (w) => w.sheetId != null && w.sync['account'] == google.accountId,
         )
         .map((w) => w.id)
         .toList();
@@ -352,17 +385,16 @@ class MobileController extends ChangeNotifier {
     final target = workspaceId == null
         ? active
         : workspaces.where((w) => w.id == workspaceId).firstOrNull;
-    if (loading ||
-        busy ||
-        editing ||
-        target?.sheetId == null ||
-        !google.connected ||
-        (target?.sync['status'] == 'Choose a version' && resolve == null)) {
+    if (loading || busy || editing || target?.sheetId == null || _closed) {
       return;
     }
     await run(() async {
       var w = target!;
       final id = w.sheetId!;
+      if (!google.connected) await google.restore();
+      if (!google.connected) {
+        throw StateError('Connect Google to sync this tracker.');
+      }
       if (w.sync['account'] != google.accountId!) {
         throw StateError(
           'Reconnect the Google account that owns this tracker.',
@@ -389,6 +421,25 @@ class MobileController extends ChangeNotifier {
         }
         await _applyRemote(w, heads.single);
         return;
+      }
+      if (heads.length == 1 &&
+          w.dirty &&
+          heads.single.id != w.sync['base'] &&
+          resolve != 'local') {
+        final base = history.where((s) => s.id == w.sync['base']).firstOrNull;
+        final merged = mergeSnapshot(base?.data, w.snapshot, heads.single.data);
+        if (merged != null) {
+          w = MobileWorkspace(w.id, merged, {
+            ...w.sync,
+            'base': heads.single.id,
+            'pending': null,
+            'revision': w.revision + 1,
+            'dirty': true,
+          });
+          await store.save(w, archive: true);
+          // Keep the merged revision visible even if its upload fails.
+          await _reload();
+        }
       }
       if ((heads.length > 1 ||
               w.dirty &&
@@ -468,6 +519,7 @@ class MobileController extends ChangeNotifier {
     _closed = true;
     _timer?.cancel();
     _debounce?.cancel();
+    _networkTimer?.cancel();
     google.close();
     unawaited(store.close());
     super.dispose();

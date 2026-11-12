@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol, net, dialog, nativeTheme, safeStorage, shell, Notification, Tray, Menu }=require('electron');
+const { app, BrowserWindow, ipcMain, protocol, net, dialog, nativeTheme, safeStorage, shell, Notification, Tray, Menu, powerMonitor }=require('electron');
 const path=require('node:path');
 const fs=require('node:fs');
 const {pathToFileURL}=require('node:url');
@@ -41,7 +41,7 @@ function refreshReminders(){
     if(!habit?.reminder?.enabled||habit.checks.includes(day)){notification.close();activeNotifications.delete(key);}
   }
 }
-async function checkConnection(){try{const response=await net.fetch('https://www.gstatic.com/generate_204',{cache:'no-store',signal:AbortSignal.timeout(7000)});online=response.status===204;}catch(_){online=false;}}
+async function checkConnection(){const wasOnline=online;try{const response=await net.fetch('https://www.gstatic.com/generate_204',{cache:'no-store',signal:AbortSignal.timeout(7000)});online=response.status===204;}catch(_){online=false;}if(online&&!wasOnline)sync?.wake().catch(()=>{});}
 function cloudState() {return {...auth.status(),online:online&&net.isOnline(),activeId:manager.activeId,profiles:manager.list(),onboarded:store.getPreference('cloudOnboarded',false)};}
 async function discoverTrackers() {
   const files=await sheets.listTrackers();
@@ -72,7 +72,9 @@ app.whenReady().then(async()=>{
   if(!auth.status().configured&&fs.existsSync(clientConfig))auth.configure(JSON.parse(fs.readFileSync(clientConfig,'utf8')));
   sheets=new GoogleSheets(auth);
   checkConnection();connectionTimer=setInterval(checkConnection,15000);auth.refreshProfile();
-  sync=new SyncEngine(manager,sheets);sync.start();
+  sync=new SyncEngine(manager,sheets,{isOnline:()=>online&&net.isOnline()});sync.start();
+  powerMonitor.on('resume',()=>{checkConnection();sync.wake().catch(()=>{});});
+  app.on('browser-window-focus',()=>sync.tick().catch(()=>{}));
   pomodoro=new Pomodoro(manager,{onSave:id=>sync.schedule(id)});
   focusInterval=setInterval(()=>{try{pomodoro.checkpoint();}catch(e){pomodoro.state.running=false;pomodoro.persist();}},5000);
   if(auth.status().connected)sync.schedule(manager.activeId);
@@ -134,7 +136,7 @@ app.whenReady().then(async()=>{
       }
       case 'switchTracker':manager.activate(payload);sync.schedule(payload);return JSON.stringify(cloudState());
       case 'renameTracker':{const data=JSON.parse(payload);manager.rename(data.id,data.alias);manager.mutate(data.id,()=>{});sync.schedule(data.id);return JSON.stringify(cloudState());}
-      case 'syncTracker':{const data=JSON.parse(payload||'{}');if(data.resolve)await sync.sync(data.id||workspaceId,{force:true,resolve:data.resolve});else sync.sync(data.id||workspaceId,{force:true}).catch(()=>{});return JSON.stringify(cloudState());}
+      case 'syncTracker':{const data=JSON.parse(payload||'{}');if(data.resolve)await sync.sync(data.id||workspaceId,{force:true,resolve:data.resolve});else await sync.sync(data.id||workspaceId,{force:true});return JSON.stringify(cloudState());}
       case 'openPrivacyPolicy':await shell.openExternal('https://its-vaibhav-2005.github.io/TaskVerse/privacy.html');return '{}';
       case 'contactSupport':await shell.openExternal('mailto:vaibhavpandey.cs31@gmail.com');return '{}';
       case 'openTrackerSheet':{const p=manager.profile(payload||workspaceId);if(p?.sheet_id)await shell.openExternal(`https://docs.google.com/spreadsheets/d/${p.sheet_id}/edit`);return '{}';}

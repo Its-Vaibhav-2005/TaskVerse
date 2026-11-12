@@ -53,12 +53,24 @@ class MobileGoogleSheets {
     account = null;
   }
 
+  Future<bool> reachable() async {
+    try {
+      final response = await client
+          .get(Uri.https('www.gstatic.com', '/generate_204'))
+          .timeout(const Duration(seconds: 7));
+      return response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> request(
     String host,
     String path, {
     String method = 'GET',
     Map<String, String>? query,
     Object? body,
+    bool retryAuth = true,
   }) async {
     final user = account;
     if (user == null) throw StateError('Connect Google to sync.');
@@ -78,9 +90,10 @@ class MobileGoogleSheets {
     if (body != null) req.body = jsonEncode(body);
     http.Response response;
     try {
-      response = await http.Response.fromStream(
-        await client.send(req),
-      ).timeout(const Duration(seconds: 25));
+      response = await client
+          .send(req)
+          .then(http.Response.fromStream)
+          .timeout(const Duration(seconds: 25));
     } on Exception {
       throw StateError(
         'Google is unreachable. Changes are saved on this device; sync will retry.',
@@ -90,6 +103,16 @@ class MobileGoogleSheets {
       await user.authorizationClient.clearAuthorizationToken(
         accessToken: auth.accessToken,
       );
+      if (retryAuth) {
+        return request(
+          host,
+          path,
+          method: method,
+          query: query,
+          body: body,
+          retryAuth: false,
+        );
+      }
       throw StateError(
         'Google access expired. Tap Sync again, or reconnect Google.',
       );

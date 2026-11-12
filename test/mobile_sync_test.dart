@@ -13,6 +13,9 @@ class MemoryGoogle extends MobileGoogleSheets {
     journalColumns,
   ];
   bool failAfterWrite = false;
+  bool available = true;
+  @override
+  Future<bool> reachable() async => available;
   @override
   bool get connected => true;
   @override
@@ -74,6 +77,63 @@ void main() {
     icon: 0,
     created: DateTime.now(),
   );
+
+  test(
+    'independent offline edits merge and a stale conflict can sync again',
+    () async {
+      final a = await device('a'), b = await device('b');
+      await a.saveHabit(habit('Read'));
+      await a.sync();
+      await b.sync();
+      await a.saveHabit(habit('Read daily'));
+      await b.setCount('habit', 1);
+      await a.sync();
+      b.active!.sync['status'] = 'Choose a version';
+      await b.store.save(b.active!);
+      await b.sync();
+      expect(b.conflict, isFalse);
+      expect(b.habits.single.name, 'Read daily');
+      expect(b.habits.single.done(DateTime.now()), isTrue);
+      await a.sync();
+      expect(a.habits.single.done(DateTime.now()), isTrue);
+      expect(
+        BackupJournal.heads(await BackupJournal.read(google.rows)),
+        hasLength(1),
+      );
+    },
+  );
+
+  test(
+    'reconnecting uploads pending edits without pressing Sync now',
+    () async {
+      final a = await device('a');
+      google.available = false;
+      await a.saveHabit(habit('Offline'));
+      await a.checkConnection();
+      expect(a.active!.dirty, isTrue);
+      google.available = true;
+      await a.checkConnection();
+      expect(a.active!.dirty, isFalse);
+      expect(a.syncLabel, 'Up to date');
+    },
+  );
+
+  test('failed merged uploads keep remote changes available locally', () async {
+    final a = await device('a'), b = await device('b');
+    await a.saveHabit(habit('Read'));
+    await a.sync();
+    await b.sync();
+    await a.saveHabit(habit('Renamed remotely'));
+    await b.setCount('habit', 1);
+    await a.sync();
+    google.failAfterWrite = true;
+    await b.sync();
+    expect(b.error, isNotNull);
+    expect(b.habits.single.name, 'Renamed remotely');
+    expect(b.habits.single.done(DateTime.now()), isTrue);
+    await b.sync();
+    expect(b.active!.dirty, isFalse);
+  });
 
   test(
     'new trackers persist independently and switching syncs pending work',

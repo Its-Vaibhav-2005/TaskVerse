@@ -1,6 +1,6 @@
 {
   "name": "trackverse",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "private": true,
   "license": "MIT",
   "description": "A private, productive habit tracker with native SQLite storage.",

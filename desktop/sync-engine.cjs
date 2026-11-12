@@ -1,12 +1,16 @@
 const {encodeSnapshot,readJournal}=require('./sheet-journal.cjs');
+const {mergeSnapshot}=require('./merge-snapshot.cjs');
 class SyncEngine {
-  constructor(manager,remote,{onChange=()=>{}}={}) {this.manager=manager;this.remote=remote;this.onChange=onChange;this.running=new Set();this.closed=false;this.lastTry=new Map();this.backoff=new Map();this.queue=new Set();}
-  start() {this.timer=setInterval(()=>this.tick().catch(()=>{}),60000);}
+  constructor(manager,remote,{onChange=()=>{},isOnline=()=>true}={}) {this.manager=manager;this.remote=remote;this.onChange=onChange;this.isOnline=isOnline;this.running=new Set();this.closed=false;this.lastTry=new Map();this.backoff=new Map();this.queue=new Set();}
+  start() {this.closed=false;this.tick().catch(()=>{});this.plan();}
+  plan() {clearTimeout(this.timer);if(!this.closed)this.timer=setTimeout(async()=>{try{await this.tick();}catch{}finally{this.plan();}},60000+Math.floor(Math.random()*120001));}
+  wake() {this.lastTry.clear();this.backoff.clear();return this.tick();}
   stop() {this.closed=true;clearInterval(this.timer);clearTimeout(this.debounce);}
   schedule(id) {this.queue.add(id);clearTimeout(this.debounce);this.debounce=setTimeout(()=>this.tick().catch(()=>{}),1500);}
   async tick() {
-    if(this.closed)return;
-    const profiles=this.manager.list().filter(p=>p.sheet_id&&(p.id===this.manager.activeId||p.dirty||this.queue.has(p.id)));
+    if(this.closed||!this.isOnline())return;
+    if(this.remote.auth&&!this.remote.auth.status().connected)return;
+    const profiles=this.manager.list().filter(p=>p.sheet_id&&(!this.remote.auth||p.account===this.remote.auth.status().identity?.id));
     for(const p of profiles) {
       if(this.closed)return;
       const delay=this.backoff.get(p.id)||15000;
@@ -37,11 +41,21 @@ class SyncEngine {
         this.manager.markSynced(id,local.pending.revision,local.pending.id);local=db.getPreference('syncState',{});
       }
       const head=history.heads[0];
+      if(history.heads.length===1&&local.dirty&&head.id!==local.base&&resolve!=='local') {
+        const base=history.snapshots.find(s=>s.id===local.base);
+        const merged=mergeSnapshot(base?.snapshot,this.manager.snapshot(id),head.snapshot);
+        if(merged) {
+          this.manager.mutate(id,store=>store.restore(merged,true));
+          this.manager.rename(id,merged.alias);
+          this.manager.updateSync(id,{base:head.id,pending:null});
+          local=db.getPreference('syncState',{});
+        }
+      }
       if((history.heads.length>1||local.dirty&&head&&head.id!==local.base)&&resolve!=='local') {
         this.manager.updateSync(id,{status:'conflict',error:'This tracker changed on another device. Choose which version to continue with; both versions remain backed up.'});return;
       }
-      if(!local.dirty&&head&&head.id!==local.base) {this.manager.applyRemote(id,head.snapshot,head.id);await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),this.manager.profile(id).alias);return;}
-      if(!local.dirty&&head) {await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),profile.alias);this.manager.updateSync(id,{status:'synced',lastSync:new Date().toISOString(),error:null});return;}
+      if(resolve!=='local'&&!local.dirty&&head&&head.id!==local.base) {this.manager.applyRemote(id,head.snapshot,head.id);await this.remote.updateSummary?.(profile.sheet_id,this.manager.snapshot(id),this.manager.profile(id).alias);return;}
+      if(resolve!=='local'&&!local.dirty&&head) {this.manager.updateSync(id,{status:'synced',lastSync:new Date().toISOString(),error:null});return;}
       const snapshot=this.manager.snapshot(id),revision=local.revision||0;
       let pending=local.pending;
       if(!pending||pending.revision!==revision||resolve==='local') {
@@ -59,7 +73,7 @@ class SyncEngine {
     } catch(e) {
       this.backoff.set(id,Math.min((this.backoff.get(id)||15000)*2,300000));
       this.manager.updateSync(id,{status:'error',error:e.message});throw e;
-    } finally {this.running.delete(id);this.onChange(id);}
+    } finally {this.running.delete(id);if(db.getPreference('syncState',{}).status==='synced')this.backoff.delete(id);this.onChange(id);}
   }
 }
 module.exports={SyncEngine};

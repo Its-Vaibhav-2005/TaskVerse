@@ -18,6 +18,28 @@ class FakeGoogleSheets {
   async updateSummary(){}
 }
 function fixture(){const directory=fs.mkdtempSync(path.join(os.tmpdir(),'trackverse-sync-'));const manager=new WorkspaceManager(directory);const remote=new FakeGoogleSheets();const engine=new SyncEngine(manager,remote);const ids=sheets.map(([sheetId,alias])=>manager.add({sheetId,alias,account:'test-account'}));return {directory,manager,remote,engine,ids,close(){engine.stop();manager.close();fs.rmSync(directory,{recursive:true,force:true});}};}
+test('Independent edits merge without a version choice and retain both changes',async()=>{
+  const f=fixture();try {
+    const id=f.ids[0];f.manager.mutate(id,db=>db.save([habit('h','Initial')],true));await f.engine.sync(id,{force:true});
+    const base=readJournal(f.remote.data.get(sheets[0][0])).heads[0];
+    const another=structuredClone(base.snapshot);another.habits[0].category='Learning';
+    f.remote.data.get(sheets[0][0]).push(...encodeSnapshot(another,[base.id]).rows);
+    f.manager.mutate(id,db=>{const h=db.load();h[0].name='Renamed';db.save(h,true);});
+    await f.engine.sync(id,{force:true});
+    assert.equal(f.manager.list().find(p=>p.id===id).status,'synced');
+    const heads=readJournal(f.remote.data.get(sheets[0][0])).heads;
+    assert.equal(heads.length,1);assert.equal(heads[0].snapshot.habits[0].name,'Renamed');assert.equal(heads[0].snapshot.habits[0].category,'Learning');
+  }finally{f.close();}
+});
+test('Reconnect clears retry backoff and also refreshes inactive linked trackers',async()=>{
+  const f=fixture();try {
+    const id=f.ids[1];f.manager.mutate(id,db=>db.save([habit('h','Offline')],true));f.remote.offline=true;
+    await assert.rejects(f.engine.sync(id,{force:true}));
+    f.remote.offline=false;await f.engine.wake();
+    assert.equal(f.manager.list().find(p=>p.id===id).dirty,false);
+    assert.ok(f.manager.list().filter(p=>p.sheet_id).every(p=>p.status==='synced'));
+  }finally{f.close();}
+});
 test('Three tracker workspaces stay isolated and recover into a fresh installation',async()=>{
   const f=fixture();let fresh,dir;
   try {

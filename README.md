@@ -4,26 +4,26 @@
 
 TrackVerse is a local-first habit tracker for Windows and Android. The Windows app offers a spreadsheet-style workspace; Android has a native phone interface. Both save habits in SQLite and share optional, private Google Sheets backups.
 
-**Current release: 2.0.0 · Windows x64 MSI/MSIX and Android test APK**
+**Current release: 2.2.0 · Windows x64 MSIX and Android test APK**
 
-**TrackVerse is available on [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2). Install through the Store with Smart App Control enabled. The v2.0.0 Store update is pending certification and publication; the direct MSI remains unsigned.**
+**TrackVerse is available on [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2). Install through the Store with Smart App Control enabled. The 2.2.0 Store update requires submission and certification; the direct MSI remains unsigned.**
 
-[Get TrackVerse from Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) · [Alternative Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.0.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
+[Get TrackVerse from Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) · [Alternative Windows MSI](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) · [Download Android test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.2.0/TrackVerse-2.2.0-debug.apk) · [Release notes and checksums](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/tag/v2.2.0) · [Website](https://its-vaibhav-2005.github.io/TaskVerse/) · [Theme showcase](https://its-vaibhav-2005.github.io/TaskVerse/themes.html) · [Changelog](CHANGELOG.md) · [Privacy policy](https://its-vaibhav-2005.github.io/TaskVerse/privacy.html)
 
-The rebuilt v2.0.0 release corrects the Windows Settings version label. Both apps display 2.0.0; Android build 7 and Store servicing package 2.0.1.0 distinguish these corrected binaries from the previous release. The Store update requires Microsoft certification before publication.
+Version 2.2.0 fixes manual and automatic sync, merges independent changes safely, and retries after reconnection. Both apps display 2.2.0 (Android build 8; Windows Store package 2.2.0.0). The new MSIX requires Store submission and certification before Windows Store users receive it.
 
-## Version 2.0.0 downloads
+## Version 2.2.0 downloads
 
 | Platform | Download | Distribution status |
 | --- | --- | --- |
-| Windows (recommended) | [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) | Available now; v2.0.0 update pending certification and publication |
-| Windows x64 (direct installer) | [MSI installer](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) | Unsigned; trusted signing pending |
-| Android 7+ | [Test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk) | Debug-signed; production signing pending |
-| Microsoft Store submission | [MSIX package](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-x64.msix) | Unsigned input for Store certification; not a direct installer |
+| Windows (recommended) | [Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) | Available now; 2.2.0 requires Store submission and certification |
+| Previous Windows 2.0.0 (direct installer) | [MSI installer](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-Setup-2.0.0-x64.msi) | Unsigned; trusted signing pending |
+| Android 7+ | [Test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.2.0/TrackVerse-2.2.0-debug.apk) | Debug-signed; production signing pending |
+| Microsoft Store submission | [MSIX package](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.2.0/TrackVerse-2.2.0-x64.msix) | Unsigned input for Store certification; not a direct installer |
 
 **Sync between devices:** use the same Google account, back up a tracker on the first device, then choose **Find my trackers** on the other device. Creating another tracker with the same name creates a separate tracker. Android **Settings → Create tracker** keeps each plan separate.
 
-Validation: **47 Flutter tests, 29 desktop tests and 8 release-policy tests passed**. The Android test build completed a live Google Sheets backup and discovery check; the owner confirmed both platforms syncing. Physical-device, clean-machine installer/upgrade and Store certification checks remain pending.
+Validation for 2.2.0 covers cross-platform journal exchange, reconnection, access-token renewal, independent edits and overlapping conflicts. Physical-device upgrades and live two-device acceptance remain pending.
 
 ## Explore
 
@@ -58,13 +58,17 @@ Validation: **47 Flutter tests, 29 desktop tests and 8 release-policy tests pass
 | Portable backups | Export and restore habits, monthly plans, check-ins, and focus sessions as JSON. |
 | Organized Settings | Manage appearance, typography, trackers, backups, and daily behavior in responsive grouped cards. |
 
-### New in 2.0.0
+### New in 2.2.0
+
+Sync now retries expired access and rechecks previously conflicted trackers. Sync runs on opening/resuming, reconnection and randomized 1–3 minute intervals while running. Independent changes merge against their common backup; overlapping changes keep explicit recovery choices. Android sync pauses when the app is closed.
+
+### Android features introduced in 2.0.0
 
 Android now has a native phone interface, Google sign-in, a consistency curve, and Settings → Create tracker. Trackers stay separate and share the Windows versioned Google Sheets backup protocol. Pending changes in inactive Android trackers are retried while the app is open. The Android download is debug-signed for testing; the MSIX is unsigned Store submission input. See the [full changelog](CHANGELOG.md).
 
 ## Install and get started
 
-1. Open [TrackVerse on Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) and choose Get or Install. On Android, download the [2.0.0 test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.0.0/TrackVerse-2.0.0-debug.apk).
+1. Open [TrackVerse on Microsoft Store](https://apps.microsoft.com/detail/9PN3VXSPMRN2) and choose Get or Install. On Android, download the [2.2.0 test APK](https://github.com/Its-Vaibhav-2005/TaskVerse/releases/download/v2.2.0/TrackVerse-2.2.0-debug.apk).
 2. Open TrackVerse after installation. Microsoft Store manages Windows app updates.
 3. Choose **Setup Locally** for SQLite-only use, or **Continue with Google** for SQLite plus optional cloud backup.
 4. Click **New habit**, enter a name, select its schedule, appearance, daily target, and optional reminder settings, then create it.
@@ -353,7 +357,7 @@ Save the exact Store Product identity values in ignored `.config/msix-identity.j
 then run `npm run dist:win:msix` on Windows. This recipe runs every desktop,
 release-policy and Flutter test, Flutter analysis, and a fresh web build before
 packing. The clean MSIX, checksum, manifest, and verification report are saved in
-`release-2.0.0/`. See [MSIX setup and acceptance](docs/windows-msix.md).
+`release-2.2.0/`. See [MSIX setup and acceptance](docs/windows-msix.md).
 
 This is an unsigned Store-submission package; Microsoft signs it after
 certification. It does not replace the existing MSI automatically. Export/import

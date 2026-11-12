@@ -7,8 +7,8 @@ const {DOMParser} = require('@xmldom/xmldom');
 const asar = require('@electron/asar');
 const {readIdentity,storePackageVersion} = require('./windows-msix.cjs');
 const root = path.resolve(__dirname, '..');
-const work = path.join(root, '.local-data/msix-2.0.0');
-const output = path.join(root, 'release-2.0.0');
+const work = path.join(root, '.local-data/msix-2.2.0');
+const output = path.join(root, 'release-2.2.0');
 const hash = file => new Promise((resolve,reject) => {
   const digest=crypto.createHash('sha256');
   fs.createReadStream(file).on('data',chunk=>digest.update(chunk)).on('error',reject).on('end',()=>resolve(digest.digest('hex')));
